@@ -2,17 +2,25 @@
 public class PlayerSkeleton {
 
 	//implement this function to have a working system
-    // Returns the move that has the maximum value based on simulateMove()
+	/**
+	 * Picks the move with the highest value.
+	 *
+	 * @param s - present state
+	 * @param legalMoves - List of legal moves
+	 * @return the move that has the maximum value based on
+	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
+	 */
 	public int pickMove(State s, int[][] legalMoves) {
 
 		int maxIdx = 0;
 		float max = simulateMove(s, legalMoves[0]);
 		for (int i = 1; i < legalMoves.length; i++) {
 			if (simulateMove(s, legalMoves[i]) > max) {
-                maxIdx = i;
-                max = simulateMove(s, legalMoves[i]);
-            }
+				maxIdx = i;
+				max = simulateMove(s, legalMoves[i]);
+			}
 		}
+
 		return maxIdx;
 	}
 
@@ -20,7 +28,7 @@ public class PlayerSkeleton {
 	public float simulateMove(State s, int[] move) {
 		SimulatedState ss = new SimulatedState(s);
 		return ss.getMoveValue(move);
-    }
+	}
 
 	public static void main(String[] args) {
 		int maxScore = Integer.MIN_VALUE;
@@ -54,29 +62,43 @@ public class PlayerSkeleton {
 }
 
 // Creates a simulated state to evaluate the value of doing a move without changing the actual game state
+
+/**
+ * {@code SimulatedState} is a simulated state. This helps to evaluate the value of performing a move without altering
+ * the game state.
+ */
 class SimulatedState extends State {
 
-	// Multipliers. Heavily prioritise row clearing, the rest are tie-breakers
+	/********************************* Multipliers to determine value of simulated move *********************************/
+	// Heavily prioritise objective of row clearing.
 	private static float rowsClearedMult = 10f;
+
+	// Multipliers used for tiebreakers.
 	private static float glitchCountMult = -0.1f;
 	private static float bumpinessMult = -0.1f;
 	private static float totalHeightMult = -0.5f;
 	private static float maxHeightMult = -0.1f;
 
+	/********************************* End of multipliers *********************************/
+
 	private int field[][];
 	private int top[];
 
 	public SimulatedState (State s) {
+		// initialize field
 		field = new int[s.getField().length][s.getField()[0].length];
-		top = new int[s.getTop().length];
 		for (int i = 0; i < field.length; i++) {
 			for (int j = 0; j < field[0].length; j++) {
 				field[i][j] = s.getField()[i][j];
 			}
 		}
+
+		// initialize top
+		top = new int[s.getTop().length];
 		for (int i = 0; i < top.length; i++) {
 			top[i] = s.getTop()[i];
 		}
+
 		nextPiece = s.getNextPiece();
 	}
 
@@ -93,15 +115,15 @@ class SimulatedState extends State {
 			height = Math.max(height,top[slot+c]-State.getpBottom()[nextPiece][orient][c]);
 		}
 
-		//check if game ended
+		// Check if game ended - penalize heavily.
 		if(height+State.getpHeight()[nextPiece][orient] >= ROWS) {
 			return Integer.MIN_VALUE;
 		}
 
-
+		/********************************* Perform simulation of adding piece *********************************/
+		/********************************* Please ignore this chunk (unless necessary) *********************************/
 		//for each column in the piece - fill in the appropriate blocks
 		for(int i = 0; i < pWidth[nextPiece][orient]; i++) {
-
 			//from bottom to top of brick
 			for(int h = height+State.getpBottom()[nextPiece][orient][i]; h < height+State.getpTop()[nextPiece][orient][i]; h++) {
 				field[h][i+slot] = 1;
@@ -142,6 +164,7 @@ class SimulatedState extends State {
 				}
 			}
 		}
+		/********************************* End of simulation *********************************/
 
 		int maxHeight = 0;
 
@@ -161,6 +184,7 @@ class SimulatedState extends State {
 		for (int i = 0; i < top.length - 1; i++) {
 			bumpiness += Math.abs(top[i] - top[i + 1]);
 		}
+
 		return bumpiness;
 	}
 
@@ -170,6 +194,7 @@ class SimulatedState extends State {
 		for (int i = 0; i < top.length; i++) {
 			totalHeight += top[i];
 		}
+
 		return totalHeight;
 	}
 
@@ -184,5 +209,4 @@ class SimulatedState extends State {
 		}
 		return glitchCount;
 	}
-
 }
