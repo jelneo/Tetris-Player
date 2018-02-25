@@ -58,7 +58,7 @@ class SimulatedState extends State {
 
 	// Multipliers. Heavily prioritise row clearing, the rest are tie-breakers
 	private static float rowsClearedMult = 10f;
-	private static float glitchCoundMult = -0.1f;
+	private static float glitchCountMult = -0.1f;
 	private static float bumpinessMult = -0.1f;
 	private static float totalHeightMult = -0.5f;
 	private static float maxHeightMult = -0.1f;
@@ -152,7 +152,7 @@ class SimulatedState extends State {
 		}
 
 		return bumpinessMult * getBumpiness(top) + totalHeightMult * getTotalHeight(top) + rowsClearedMult * rowsCleared
-				+ maxHeightMult * maxHeight + glitchCoundMult * getGlitchCount(field);
+				+ maxHeightMult * maxHeight + glitchCountMult * getGlitchCount(field);
 	}
 
 	// Checks for how bumpy the top is
