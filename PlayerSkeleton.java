@@ -23,20 +23,32 @@ public class PlayerSkeleton {
     }
 
 	public static void main(String[] args) {
-		State s = new State();
-		new TFrame(s);
-		PlayerSkeleton p = new PlayerSkeleton();
-		while(!s.hasLost()) {
-			s.makeMove(p.pickMove(s,s.legalMoves()));
-			s.draw();
-			s.drawNext(0,0);
-			try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		int maxScore = Integer.MIN_VALUE;
+		int minScore = Integer.MAX_VALUE;
+		int sum = 0;
+		int counter = 10;
+		while(counter-- > 0) {
+			State s = new State();
+			new TFrame(s);
+			PlayerSkeleton p = new PlayerSkeleton();
+			while (!s.hasLost()) {
+				s.makeMove(p.pickMove(s, s.legalMoves()));
+				s.draw();
+				s.drawNext(0, 0);
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
+			maxScore = Math.max(maxScore, s.getRowsCleared());
+			minScore = Math.min(minScore, s.getRowsCleared());
+			sum += s.getRowsCleared();
+			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
-		System.out.println("You have completed "+s.getRowsCleared()+" rows.");
+		System.out.println("Ave: " + (sum/10));
+		System.out.println("Min: " + minScore);
+		System.out.println("Max: " + maxScore);
 	}
 
 }
@@ -46,6 +58,7 @@ class SimulatedState extends State {
 
 	// Multipliers. Heavily prioritise row clearing, the rest are tie-breakers
 	private static float rowsClearedMult = 10f;
+	private static float glitchCountMult = -0.1f;
 	private static float bumpinessMult = -0.1f;
 	private static float totalHeightMult = -0.5f;
 	private static float maxHeightMult = -0.1f;
@@ -82,7 +95,7 @@ class SimulatedState extends State {
 
 		//check if game ended
 		if(height+State.getpHeight()[nextPiece][orient] >= ROWS) {
-			return -1000f;
+			return Integer.MIN_VALUE;
 		}
 
 
@@ -139,7 +152,7 @@ class SimulatedState extends State {
 		}
 
 		return bumpinessMult * getBumpiness(top) + totalHeightMult * getTotalHeight(top) + rowsClearedMult * rowsCleared
-				+ maxHeightMult * maxHeight;
+				+ maxHeightMult * maxHeight + glitchCountMult * getGlitchCount(field);
 	}
 
 	// Checks for how bumpy the top is
@@ -158,6 +171,18 @@ class SimulatedState extends State {
 			totalHeight += top[i];
 		}
 		return totalHeight;
+	}
+
+	public float getGlitchCount(int[][] field) {
+		float glitchCount = 0;
+		for (int r = 1; r < field.length; r++) {
+			for(int c = 0; c < field[r].length; c++) {
+				if ((field[r][c] == 0) && (field[r - 1][c] != 0)) {
+					glitchCount++;
+				}
+			}
+		}
+		return glitchCount;
 	}
 
 }
