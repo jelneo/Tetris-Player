@@ -18,7 +18,7 @@ public class State {
 	private int cleared = 0;
 
   // 0 means that the square is empty. Non-zero values denote the turn that the square was filled by a piece.
-	private int[][] boardState = new int[ROWS][COLS];
+	private int[][] field = new int[ROWS][COLS];
 
 	// (top row + 1) of each column. 0 indicates empty top row.
 	private int[] top = new int[COLS];
@@ -107,8 +107,8 @@ public class State {
 	
 	}
 	
-	public int[][] getBoardState() {
-		return boardState;
+	public int[][] getField() {
+		return field;
 	}
 
 	public int[] getTop() {
@@ -209,7 +209,7 @@ public class State {
 		for(int i = 0; i < pWidth[nextPiece][orient]; i++) {
 			//from bottom to top of brick
 			for(int h = height + pBottom[nextPiece][orient][i]; h < height+pTop[nextPiece][orient][i]; h++) {
-				boardState[h][i + slot] = turn;
+				field[h][i + slot] = turn;
 			}
 		}
 		
@@ -226,7 +226,7 @@ public class State {
 			//check all columns in the row
 			boolean full = true;
 			for(int c = 0; c < COLS; c++) {
-				if (boardState[r][c] == 0) {
+				if (field[r][c] == 0) {
 					full = false;
 					break;
 				}
@@ -241,11 +241,11 @@ public class State {
 
 					//slide down all bricks
 					for(int i = r; i < top[c]; i++) {
-						boardState[i][c] = boardState[i+1][c];
+						field[i][c] = field[i+1][c];
 					}
 					//lower the top
 					top[c]--;
-					while(top[c]>=1 && boardState[top[c]-1][c]==0)	top[c]--;
+					while(top[c]>=1 && field[top[c]-1][c]==0)	top[c]--;
 				}
 			}
 		}
@@ -258,7 +258,7 @@ public class State {
 
 	/********************************* GUI for simulation *********************************/
 	/**
-	 * dRAWS TEH BOARD
+	 * Draws the board
 	 */
 	public void draw() {
 		label.clear();
@@ -273,7 +273,7 @@ public class State {
 				
 		for(int c = 0; c < COLS; c++) {
 			for(int r = 0; r < top[c]; r++) {
-				if(boardState[r][c] != 0) {
+				if(field[r][c] != 0) {
 					drawBrick(c,r);
 				}
 			}
