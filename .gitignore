@@ -1,4 +1,5 @@
 Tetris-Player.iml
 .idea/
-parameter.txt
 out/
+*.class
+*.txt
