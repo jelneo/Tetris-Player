@@ -1,9 +1,26 @@
 import java.util.Scanner;
 
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+
 public class PlayerSkeleton {
 
+	/********************************* Multipliers to determine value of simulated move *********************************/
+	// Heavily prioritise objective of row clearing.
+	static float rowsClearedMult = 10f;
+
+	// Multipliers used for tiebreakers.
+	static float glitchCountMult = -0.1f;
+	static float bumpinessMult = -0.1f;
+	static float totalHeightMult = -0.5f;
+	static float maxHeightMult = -0.1f;
+
+	/********************************* End of multipliers *********************************/
+
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 30;
+	private static final int DATA_SIZE = 100;
 
 	//implement this function to have a working system
 	/**
@@ -34,12 +51,72 @@ public class PlayerSkeleton {
 		return ss.getMoveValue(move);
 	}
 
+	/**
+	 * Sets parameters for the current iteration. Parameters stored in parameter.txt in same directory as PlayerSkeleton
+	 * file. If file is empty, then use default parameters.
+	 *
+	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+	 */
+	private static void setParameters() {
+		// The name of the file to open.
+		String fileName = "parameter.txt";
+
+		// This will reference one line at a time
+		String line = null;
+
+		// read first line from parameter.txt
+		try {
+			FileReader fileReader =
+					new FileReader(fileName);
+
+			// Always wrap FileReader in BufferedReader.
+			BufferedReader bufferedReader =  new BufferedReader(fileReader);
+
+			line = bufferedReader.readLine();
+
+			bufferedReader.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		if (line == null) {
+			System.out.println("parameter.txt is empty, using default values");
+		} else {
+			String[] values = line.split(" ");
+			setParameters(values);
+		}
+	}
+
+	private static void setParameters(String[] values) {
+		rowsClearedMult = Float.parseFloat(values[0]);
+
+		// Multipliers used for tiebreakers.
+		glitchCountMult = Float.parseFloat(values[1]);
+		bumpinessMult = Float.parseFloat(values[2]);
+		totalHeightMult = Float.parseFloat(values[3]);
+		maxHeightMult = Float.parseFloat(values[4]);
+	}
+
 	public static void main(String[] args) {
 		setVisualMode();
+		setParameters();
+		printParameters();
+		executeDataSet();
+	}
 
+	/**
+	 * Prints value of parameters
+	 */
+	private static void printParameters() {
+		System.out.println("rows-mul: " + rowsClearedMult + " glitch-mul: " + glitchCountMult + " bump-mul: "
+				+ bumpinessMult + " totalHeight-mul: " + totalHeightMult + " maxHeight-mul: " + maxHeightMult);
+	}
+
+	private static void executeDataSet() {
 		int maxScore = Integer.MIN_VALUE;
 		int minScore = Integer.MAX_VALUE;
 		int sum = 0;
+		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
 		while(counter-- > 0) {
 			State s = new State();
@@ -56,12 +133,14 @@ public class PlayerSkeleton {
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
 			sum += s.getRowsCleared();
+			var += s.getRowsCleared() * s.getRowsCleared();
 			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
-
 		}
-		System.out.println("Ave: " + (sum / DATA_SIZE));
-		System.out.println("Min: " + minScore);
-		System.out.println("Max: " + maxScore);
+
+		var -= ((double) sum) * ((double) sum) / DATA_SIZE;
+		var /= DATA_SIZE - 1;
+
+		System.out.println(" Ave: " + (sum / DATA_SIZE) + " Min: " + minScore + " Max: " + maxScore + " Var: " + var);
 	}
 
 	private static void setVisualMode() {
@@ -103,18 +182,6 @@ public class PlayerSkeleton {
  * the game state.
  */
 class SimulatedState extends State {
-
-	/********************************* Multipliers to determine value of simulated move *********************************/
-	// Heavily prioritise objective of row clearing.
-	private static float rowsClearedMult = 10f;
-
-	// Multipliers used for tiebreakers.
-	private static float glitchCountMult = -0.1f;
-	private static float bumpinessMult = -0.1f;
-	private static float totalHeightMult = -0.5f;
-	private static float maxHeightMult = -0.1f;
-
-	/********************************* End of multipliers *********************************/
 
 	private int field[][];
 	private int top[];
@@ -209,8 +276,11 @@ class SimulatedState extends State {
 			}
 		}
 
-		return bumpinessMult * getBumpiness(top) + totalHeightMult * getTotalHeight(top) + rowsClearedMult * rowsCleared
-				+ maxHeightMult * maxHeight + glitchCountMult * getGlitchCount(field);
+		return PlayerSkeleton.bumpinessMult * getBumpiness(top)
+				+ PlayerSkeleton.totalHeightMult * getTotalHeight(top)
+				+ PlayerSkeleton.rowsClearedMult * rowsCleared
+				+ PlayerSkeleton.maxHeightMult * maxHeight
+				+ PlayerSkeleton.glitchCountMult * getGlitchCount(field);
 	}
 
 	// Checks for how bumpy the top is
