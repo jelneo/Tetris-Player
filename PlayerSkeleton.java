@@ -1,5 +1,9 @@
+import java.util.Scanner;
 
 public class PlayerSkeleton {
+
+	private static boolean visualMode = false;
+	private static final int DATA_SIZE = 30;
 
 	//implement this function to have a working system
 	/**
@@ -31,34 +35,65 @@ public class PlayerSkeleton {
 	}
 
 	public static void main(String[] args) {
+		setVisualMode();
+
 		int maxScore = Integer.MIN_VALUE;
 		int minScore = Integer.MAX_VALUE;
 		int sum = 0;
-		int counter = 10;
+		int counter = DATA_SIZE; // set to 30 for more accurate sample size
 		while(counter-- > 0) {
 			State s = new State();
-			new TFrame(s);
-			PlayerSkeleton p = new PlayerSkeleton();
-			while (!s.hasLost()) {
-				s.makeMove(p.pickMove(s, s.legalMoves()));
-				s.draw();
-				s.drawNext(0, 0);
-				try {
-					Thread.sleep(10);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+
+			if (visualMode) {
+				visualize(s);
+			} else {
+				PlayerSkeleton p = new PlayerSkeleton();
+				while (!s.hasLost()) {
+					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
+
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
 			sum += s.getRowsCleared();
 			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
+
 		}
-		System.out.println("Ave: " + (sum/10));
+		System.out.println("Ave: " + (sum / DATA_SIZE));
 		System.out.println("Min: " + minScore);
 		System.out.println("Max: " + maxScore);
 	}
 
+	private static void setVisualMode() {
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Visual Mode? 1 for yes, 0 for no");
+		visualMode = sc.nextInt() == 1;
+		sc.close();
+	}
+
+	private static void visualize(State s) {
+		TFrame window = new TFrame(s);
+		PlayerSkeleton p = new PlayerSkeleton();
+
+		while (!s.hasLost()) {
+			s.makeMove(p.pickMove(s, s.legalMoves()));
+
+			if (visualMode) {
+				s.draw();
+				s.drawNext(0, 0);
+			}
+
+			// This creates a delay, making it harder to test multiple tests
+			/*
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			*/
+		}
+		window.dispose();
+	}
 }
 
 // Creates a simulated state to evaluate the value of doing a move without changing the actual game state
