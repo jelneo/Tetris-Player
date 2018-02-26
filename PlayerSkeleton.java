@@ -64,13 +64,8 @@ public class PlayerSkeleton {
 	}
 
 	/**
-	 * Prints value of parameters
+	 * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
 	 */
-	private static void printParameters() {
-		System.out.println("rows-mul: " + rowsClearedMult + " glitch-mul: " + glitchCountMult + " bump-mul: "
-				+ bumpinessMult + " totalHeight-mul: " + totalHeightMult + " maxHeight-mul: " + maxHeightMult);
-	}
-
 	private static void executeDataSet() {
 		int maxScore = Integer.MIN_VALUE;
 		int minScore = Integer.MAX_VALUE;
@@ -132,6 +127,7 @@ public class PlayerSkeleton {
 		}
 		window.dispose();
 	}
+
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameter.txt";
@@ -201,6 +197,14 @@ public class PlayerSkeleton {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Prints value of parameters
+	 */
+	private static void printParameters() {
+		System.out.println("rows-mul: " + rowsClearedMult + " glitch-mul: " + glitchCountMult + " bump-mul: "
+				+ bumpinessMult + " totalHeight-mul: " + totalHeightMult + " maxHeight-mul: " + maxHeightMult);
 	}
 	/********************************* End of Parameter weight optimization *********************************/
 
