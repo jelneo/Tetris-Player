@@ -1,3 +1,5 @@
 Tetris-Player.iml
 .idea/
 out/
+*.class
+*.txt
