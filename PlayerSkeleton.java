@@ -3,6 +3,7 @@ import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 
 public class PlayerSkeleton {
@@ -20,7 +21,7 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 100;
+	private static final int DATA_SIZE = 30;
 
 	//implement this function to have a working system
 	/**
@@ -51,57 +52,15 @@ public class PlayerSkeleton {
 		return ss.getMoveValue(move);
 	}
 
-	/**
-	 * Sets parameters for the current iteration. Parameters stored in parameter.txt in same directory as PlayerSkeleton
-	 * file. If file is empty, then use default parameters.
-	 *
-	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
-	 */
-	private static void setParameters() {
-		// The name of the file to open.
-		String fileName = "parameter.txt";
-
-		// This will reference one line at a time
-		String line = null;
-
-		// read first line from parameter.txt
-		try {
-			FileReader fileReader =
-					new FileReader(fileName);
-
-			// Always wrap FileReader in BufferedReader.
-			BufferedReader bufferedReader =  new BufferedReader(fileReader);
-
-			line = bufferedReader.readLine();
-
-			bufferedReader.close();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-
-		if (line == null) {
-			System.out.println("parameter.txt is empty, using default values");
-		} else {
-			String[] values = line.split(" ");
-			setParameters(values);
-		}
-	}
-
-	private static void setParameters(String[] values) {
-		rowsClearedMult = Float.parseFloat(values[0]);
-
-		// Multipliers used for tiebreakers.
-		glitchCountMult = Float.parseFloat(values[1]);
-		bumpinessMult = Float.parseFloat(values[2]);
-		totalHeightMult = Float.parseFloat(values[3]);
-		maxHeightMult = Float.parseFloat(values[4]);
-	}
-
 	public static void main(String[] args) {
 		setVisualMode();
 		setParameters();
 		printParameters();
+		
 		executeDataSet();
+
+		printParameters();
+		saveParameters();
 	}
 
 	/**
@@ -173,6 +132,78 @@ public class PlayerSkeleton {
 		}
 		window.dispose();
 	}
+
+	/********************************* Parameter weight optimization *********************************/
+	private static final String PARAM_FILE_NAME = "parameter.txt";
+
+	/**
+	 * Sets parameter weights for the current iteration. Parameters stored in parameter.txt in same directory as
+	 * PlayerSkeleton file. If file is empty, then use default parameters.
+	 *
+	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+	 */
+	private static void setParameters() {
+		// This will reference one line at a time
+		String line = null;
+
+		// read first line from parameter.txt
+		try {
+			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
+
+			// Always wrap FileReader in BufferedReader.
+			BufferedReader bufferedReader =  new BufferedReader(fileReader);
+
+			line = bufferedReader.readLine();
+
+			bufferedReader.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		if (line == null) {
+			System.out.println("parameter.txt is empty, using default values");
+		} else {
+			String[] values = line.split(" ");
+			setParameters(values);
+		}
+	}
+
+	private static void setParameters(String[] values) {
+		rowsClearedMult = Float.parseFloat(values[0]);
+
+		// Multipliers used for tiebreakers.
+		glitchCountMult = Float.parseFloat(values[1]);
+		bumpinessMult = Float.parseFloat(values[2]);
+		totalHeightMult = Float.parseFloat(values[3]);
+		maxHeightMult = Float.parseFloat(values[4]);
+	}
+
+	/**
+	 * Saves parameter weights of the current iteration. Parameters stored in parameter.txt in same directory as
+	 * PlayerSkeleton file.
+	 *
+	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+	 */
+	private static void saveParameters() {
+		try {
+			FileWriter fileWriter =  new FileWriter(PARAM_FILE_NAME);
+
+			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+
+			// append a newline character.
+			bufferedWriter.write(rowsClearedMult + " "
+					+ glitchCountMult + " "
+					+ bumpinessMult + " "
+					+ totalHeightMult + " "
+					+ maxHeightMult + "\n");
+
+			bufferedWriter.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	/********************************* End of Parameter weight optimization *********************************/
+
 }
 
 // Creates a simulated state to evaluate the value of doing a move without changing the actual game state
