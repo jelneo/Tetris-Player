@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.IOException;
 
 public class PlayerSkeleton {
 
@@ -27,14 +26,15 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 30;
+	private static final int DATA_SIZE = 100;
+	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
 	/**
 	 * Picks the move with the highest value.
 	 *
-	 * @param s - present state
-	 * @param legalMoves - List of legal moves
+	 * @param s present state
+	 * @param legalMoves List of legal moves
 	 * @return the move that has the maximum value based on
 	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
 	 */
@@ -65,6 +65,7 @@ public class PlayerSkeleton {
 		
 		executeDataSet();
 
+//		multiplierWeights = geneticAlgorithm.getFittestCandidate();
 		printParameters();
 		saveParameters();
 	}
@@ -78,6 +79,7 @@ public class PlayerSkeleton {
 		int sum = 0;
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
+//		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
 		while(counter-- > 0) {
 			State s = new State();
 
@@ -89,9 +91,10 @@ public class PlayerSkeleton {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
-
+//			geneticAlgorithm.sendScore(s.getRowsCleared());
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
+
 			sum += s.getRowsCleared();
 			var += s.getRowsCleared() * s.getRowsCleared();
 			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
@@ -134,6 +137,13 @@ public class PlayerSkeleton {
 		window.dispose();
 	}
 
+	protected static void setMultiplierWeights(float[] newWeights) {
+//        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
+		for (int i = 0; i < NUM_PARAMETERS; i++) {
+		    multiplierWeights[i] = newWeights[i];
+        }
+//        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
+    }
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameter.txt";
