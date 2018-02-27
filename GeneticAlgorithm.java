@@ -68,13 +68,13 @@ public class GeneticAlgorithm {
             float[] winner2 = winners.get(i + 1);
 
             // Create 2 new offspring
-            for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
 
                 float[] child = new float[NUM_CHROMOSOMES];
 
                 // Pick at random a mixed subset of the two winners and make it the new chromosome
-                for (int j = 0; j < NUM_CHROMOSOMES; j++) {
-                    child[j] = rnd.nextInt(2) > 0 ? winner1[j] : winner2[j];
+                for (int k = 0; k < NUM_CHROMOSOMES; k++) {
+                    child[j] = rnd.nextInt(2) > 0 ? winner1[k] : winner2[k];
 
                     // Mutation
                     boolean mutate = rnd.nextFloat() < mutation_rate;
