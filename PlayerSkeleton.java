@@ -332,7 +332,7 @@ public class PlayerSkeleton {
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field);
+					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field, top);
 		}
 
 		// Checks for how bumpy the top is
@@ -355,15 +355,60 @@ public class PlayerSkeleton {
 			return totalHeight;
 		}
 
-		public float getGlitchCount(int[][] field) {
+		public float getGlitchCount(int[][] field, int[] top) {
 			float glitchCount = 0;
-			for (int r = 1; r < field.length; r++) {
-				for(int c = 0; c < field[r].length; c++) {
-					if ((field[r][c] == 0) && (field[r - 1][c] != 0)) {
-						glitchCount++;
+
+			int[][] temp = new int[ROWS][COLS];
+
+			for (int i = 0; i < COLS; i++) {
+				for (int j = 0; j < ROWS; j++) {
+					if (j >= top[i]) {
+						temp[j][i] = 2;
+					} else {
+						temp[j][i] = field[j][i];
 					}
 				}
 			}
+
+			for (int r = 0; r < ROWS; r++) {
+				for(int c = 0; c < COLS; c++) {
+					if (temp[r][c] == 0) {
+						// penalize for bigger glitches
+						glitchCount = (int) Math.pow(getLocalGlitchSize(temp, r, c), 2);
+					}
+				}
+			}
+
+			return glitchCount;
+		}
+
+		/**
+		 * Recursive counts the empty holes adjacent to the current square
+		 *
+		 * @param field - field to count the empty squares from.
+		 * @param r - row of the square
+		 * @param c - column of the square
+		 * @return # of localized glitches
+		 */
+		private int getLocalGlitchSize(int[][] field, int r, int c) {
+			if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
+				return 0;
+			}
+
+			if (field[r][c] != 0) {
+				return 0;
+			}
+
+			int glitchCount = 1;
+			field[r][c] = -1;
+
+
+			for (int i = r - 1; i <= r + 1; i++) {
+				for (int j = c - 1; j <= c + 1; j++) {
+					glitchCount += getLocalGlitchSize(field, i, j);
+				}
+			}
+
 			return glitchCount;
 		}
 	}
