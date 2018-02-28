@@ -326,8 +326,8 @@ public class PlayerSkeleton {
 		}
 
 		// Checks for how bumpy the top is
-		public float getBumpiness(int[] top) {
-			float bumpiness = 0;
+		public int getBumpiness(int[] top) {
+			int bumpiness = 0;
 			for (int i = 0; i < top.length - 1; i++) {
 				bumpiness += Math.abs(top[i] - top[i + 1]);
 			}
@@ -336,8 +336,8 @@ public class PlayerSkeleton {
 		}
 
 		// Returns the sum of heights
-		public float getTotalHeight(int[] top) {
-			float totalHeight = 0;
+		public int getTotalHeight(int[] top) {
+			int totalHeight = 0;
 			for (int i = 0; i < top.length; i++) {
 				totalHeight += top[i];
 			}
@@ -345,11 +345,12 @@ public class PlayerSkeleton {
 			return totalHeight;
 		}
 
-		public float getGlitchCount(int[][] field) {
-			float glitchCount = 0;
-			for (int r = 1; r < field.length; r++) {
-				for(int c = 0; c < field[r].length; c++) {
-					if ((field[r][c] == 0) && (field[r - 1][c] != 0)) {
+		// Returns the total number of glitch tiles
+		public int getGlitchCount(int[][] field) {
+			int glitchCount = 0;
+			for (int c = 0; c < field[0].length; c++) {
+				for (int r = 0; r < top[c]; r++) {
+					if (field[r][c] == 0) {
 						glitchCount++;
 					}
 				}
