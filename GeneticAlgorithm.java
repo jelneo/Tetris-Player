@@ -9,9 +9,10 @@ import java.util.Random;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 5;
     private static final float PERCENTAGE_OFFSPRING = 0.3f;
+    private static final float MUTATION_AMOUNT = 1;
     private int population = 100;
     private int generation = 1;
-    private final float mutation_rate = 0.05f;
+    private final float mutation_rate = 0.2f;
     private float[][] chromosomes;
     private int currentCandidate = 0;
     private ArrayList<ScoreIndexPair> scores = new ArrayList<>(population);
@@ -21,6 +22,7 @@ public class GeneticAlgorithm {
     private static float fittestScore = Float.NEGATIVE_INFINITY;
     private static int fittestGeneration = 0;
     private static int fittestIndex = 0;
+
 
     public GeneticAlgorithm(float[] weights) {
         setUpChromosomes(weights);
@@ -34,7 +36,7 @@ public class GeneticAlgorithm {
         chromosomes = new float[population][NUM_CHROMOSOMES];
         for (int i = 0; i < population; i++) {
             for (int j = 0; j < NUM_CHROMOSOMES; j++) {
-                if (i == 0) {
+                if (i % 2 == 0) {
                     chromosomes[i][j] = weights[j];
                 } else {
                     chromosomes[i][j] = rnd.nextFloat() * 10 - 5;
@@ -80,7 +82,7 @@ public class GeneticAlgorithm {
                     boolean mutate = rnd.nextFloat() < mutation_rate;
                     if (mutate) {
                         // Change this value anywhere from -5 to 5
-                        double change = rnd.nextFloat() * 10 - 5;
+                        float change = rnd.nextFloat() * MUTATION_AMOUNT * 2 - MUTATION_AMOUNT;
                         child[j] += change;
                     }
                 }
@@ -138,7 +140,7 @@ public class GeneticAlgorithm {
     public void sendScore(float score) {
         String s = aToS(chromosomes[currentCandidate]);
         String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
-//        System.out.println(string);
+        System.out.println(string);
         scores.add(currentCandidate,new ScoreIndexPair(score, currentCandidate));
         currentCandidate++;
 
@@ -173,4 +175,26 @@ public class GeneticAlgorithm {
         }
         return "[" + s + "]";
     }
+
+    private float[] mutateCandidateRandomly(float[] candidate) {
+        float[] mutant = new float[NUM_CHROMOSOMES];
+
+        // Pick at random a mixed subset of the two winners and make it the new chromosome
+        for (int k = 0; k < NUM_CHROMOSOMES; k++) {
+
+            // Mutation
+            boolean mutate = rnd.nextFloat() < mutation_rate;
+            if (mutate) {
+                // Change this value anywhere from -5 to 5
+                float change = rnd.nextFloat() * MUTATION_AMOUNT * 2 - MUTATION_AMOUNT;
+                mutant[k] = candidate[k] + change;
+            }
+        }
+
+        return mutant;
+    }
+
+
+
+
 }

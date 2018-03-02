@@ -26,7 +26,7 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 100;
+	private static final int DATA_SIZE = 1000;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -65,7 +65,7 @@ public class PlayerSkeleton {
 		
 		executeDataSet();
 
-//		multiplierWeights = geneticAlgorithm.getFittestCandidate();
+		multiplierWeights = geneticAlgorithm.getFittestCandidate();
 		printParameters();
 		saveParameters();
 	}
@@ -79,7 +79,7 @@ public class PlayerSkeleton {
 		int sum = 0;
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
-//		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
+		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
 		while(counter-- > 0) {
 			State s = new State();
 
@@ -91,13 +91,13 @@ public class PlayerSkeleton {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
-//			geneticAlgorithm.sendScore(s.getRowsCleared());
+			geneticAlgorithm.sendScore(s.getRowsCleared());
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
 
 			sum += s.getRowsCleared();
 			var += s.getRowsCleared() * s.getRowsCleared();
-			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
+//			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
 
 		var -= ((double) sum) * ((double) sum) / DATA_SIZE;
