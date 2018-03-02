@@ -17,7 +17,7 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static float[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f};
+	private static float[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f};
 
 	private static String[] multiplierNames = {
 		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL"
@@ -27,6 +27,7 @@ public class PlayerSkeleton {
 
 	private static boolean visualMode = false;
 	private static final int DATA_SIZE = 1000;
+	private static final int LINES_LIMIT = 5000;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -87,11 +88,11 @@ public class PlayerSkeleton {
 				visualize(s);
 			} else {
 				PlayerSkeleton p = new PlayerSkeleton();
-				while (!s.hasLost()) {
+				while (!s.hasLost() && (s.getRowsCleared() < LINES_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
-			geneticAlgorithm.sendScore(s.getRowsCleared());
+			geneticAlgorithm.sendScore(multiplierWeights, s.getRowsCleared());
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
 
@@ -339,7 +340,7 @@ public class PlayerSkeleton {
 		public float getBumpiness(int[] top) {
 			float bumpiness = 0;
 			for (int i = 0; i < top.length - 1; i++) {
-				bumpiness += Math.abs(top[i] - top[i + 1]);
+				bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
 			}
 
 			return bumpiness;

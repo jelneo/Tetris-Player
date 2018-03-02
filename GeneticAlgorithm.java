@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * A genetic algorithm that is used to evolve the Tetris AI and find the best weight multiplier for each feature
@@ -9,19 +6,20 @@ import java.util.Random;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 5;
     private static final float PERCENTAGE_OFFSPRING = 0.3f;
-    private static final float MUTATION_AMOUNT = 1;
+    private static final float MUTATION_AMOUNT = 0.2f;
     private int population = 100;
     private int generation = 1;
-    private final float mutation_rate = 0.2f;
-    private float[][] chromosomes;
+    private final float MUTATION_RATE = 0.05f;
+    private List<float[]> chromosomes;
     private int currentCandidate = 0;
-    private ArrayList<ScoreIndexPair> scores = new ArrayList<>(population);
+    private ArrayList<Candidate> scores = new ArrayList<>(population);
     List<float[]> offspring_population = new ArrayList<>(population/2);
     private Random rnd = new Random();
     private static float[] fittestCandidate = new float[NUM_CHROMOSOMES];
     private static float fittestScore = Float.NEGATIVE_INFINITY;
     private static int fittestGeneration = 0;
     private static int fittestIndex = 0;
+    private static Candidate bestCandidate = null;
 
 
     public GeneticAlgorithm(float[] weights) {
@@ -33,75 +31,53 @@ public class GeneticAlgorithm {
      * @param weights the weights of the features defined in {@code PlayerSkeleton.java}
      */
     private void setUpChromosomes(float[] weights) {
-        chromosomes = new float[population][NUM_CHROMOSOMES];
-        for (int i = 0; i < population; i++) {
-            for (int j = 0; j < NUM_CHROMOSOMES; j++) {
-                if (i % 2 == 0) {
-                    chromosomes[i][j] = weights[j];
-                } else {
-                    chromosomes[i][j] = rnd.nextFloat() * 10 - 5;
-                }
-            }
+        chromosomes = new ArrayList<>(population);
+        chromosomes.add(weights);
+        for (int i = 1; i < population; i++) {
+            chromosomes.add(mutateCandidateRandomly(weights, 1, MUTATION_AMOUNT * 2));
         }
+    }
+
+    private float[] createRandomChromosome() {
+        float[] randomChromosome = new float[NUM_CHROMOSOMES];
+        for(int i = 0; i < randomChromosome.length; i++) {
+            randomChromosome[i] = (float) (Math.random() - 0.5);
+        }
+
+        return normalize(randomChromosome);
     }
 
     /**
      * Create new generation
      */
     private void createNewGeneration() {
-        List<float[]> winners = new ArrayList<>();
-
+//        List<float[]> winners = new ArrayList<>();
+        List<Candidate> winners = null;
+        Collections.sort(scores);
         // Pair 1 with 2, 3 with 4, etc.
-        for (int i = 0; i < (population / 2); i++) {
-
-            // Pick the fitter one of the two
-            float score1 = scores.get(i).getScore();
-            float score2 = scores.get(i+1).getScore();
-            int winner = score1 > score2 ? i : i + 1;
-
-            // Keep the winner, discard the loser.
-            winners.add(chromosomes[winner]);
-        }
+        winners = scores.subList(population / 2, population - 1);
 
         List<float[]> offspring_population = new ArrayList<>(population/2);
         // Pair up two winners at a time
         for (int i = 0; i < (winners.size() / 2); i++) {
-            float[] winner1 = winners.get(i);
-            float[] winner2 = winners.get(i + 1);
+            Candidate winner1 = winners.get(i);
+            Candidate winner2 = winners.get(i + 1);
 
-            // Create 2 new offspring
-            for (int j = 0; j < 2; j++) {
-
-                float[] child = new float[NUM_CHROMOSOMES];
-
-                // Pick at random a mixed subset of the two winners and make it the new chromosome
-                for (int k = 0; k < NUM_CHROMOSOMES; k++) {
-                    child[j] = rnd.nextInt(2) > 0 ? winner1[k] : winner2[k];
-
-                    // Mutation
-                    boolean mutate = rnd.nextFloat() < mutation_rate;
-                    if (mutate) {
-                        // Change this value anywhere from -5 to 5
-                        float change = rnd.nextFloat() * MUTATION_AMOUNT * 2 - MUTATION_AMOUNT;
-                        child[j] += change;
-                    }
-                }
-
-                offspring_population.add(child);
-            }
+            offspring_population.add(
+                    mutateCandidateRandomly(
+                            mutateByCrossoverCandidates(winner1, winner2),
+                            MUTATION_RATE,
+                            MUTATION_AMOUNT));
         }
 
         // Shuffle the offspring population.
         Collections.shuffle(offspring_population, rnd);
 
         // Replace the least fit PERCENTAGE_OFFSPRING of the population
-        Collections.sort(scores);
-        for (int i = 0; i < (int)(PERCENTAGE_OFFSPRING * population); i++) {
-            for (int j = 0; j < NUM_CHROMOSOMES; j++) {
-                chromosomes[scores.get(i).getIndex()][j] = offspring_population.get(i)[j];
-            }
+        chromosomes = chromosomes.subList((int) PERCENTAGE_OFFSPRING * population, population - 1);
+        for(int i = 0; chromosomes.size() < population && i < offspring_population.size(); i++ ) {
+            chromosomes.add(offspring_population.get(i));
         }
-
         generation++;
         currentCandidate = 0;
         scores = new ArrayList<>(population);
@@ -113,20 +89,20 @@ public class GeneticAlgorithm {
     private void findFittestCandidate() {
         // Update the fittest candidate with previous generation's best candidate
         int maxIndex = 0;
-        float maxScore = scores.get(0).getScore();
+        float maxScore = 0;
         for (int i = 0; i < scores.size(); i++) {
-            float currScore = scores.get(i).getScore();
+            float currScore = scores.get(i).getFitnessScore();
             if (currScore > maxScore) {
                 maxIndex = i;
                 maxScore = currScore;
             }
         }
-        System.out.println("local Generation " + generation + " candid. " + (maxIndex+1) + " chosen (max score: " + maxScore + "): " + aToS(chromosomes[maxIndex]));
+        System.out.println("local Generation " + generation + " candid. " + (maxIndex+1) + " chosen (max score: " + maxScore + "): " + aToS(chromosomes.get(maxIndex)));
 
         if (maxScore > fittestScore) {
             fittestScore = maxScore;
             for (int  i = 0; i < NUM_CHROMOSOMES ; i++) {
-                fittestCandidate[i] = chromosomes[maxIndex][i];
+                fittestCandidate[i] = chromosomes.get(maxIndex)[i];
             }
             fittestGeneration = generation;
             fittestIndex = maxIndex;
@@ -137,18 +113,19 @@ public class GeneticAlgorithm {
      * Allow the PlayerSkeleton class to send scores for a set of multiplier weights
      * @param score from using a set of multiplier weights
      */
-    public void sendScore(float score) {
-        String s = aToS(chromosomes[currentCandidate]);
+    public void sendScore(float[] weights, float score) {
+        String s = aToS(chromosomes.get(currentCandidate));
         String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
-        System.out.println(string);
-        scores.add(currentCandidate,new ScoreIndexPair(score, currentCandidate));
+//        System.out.println(string);
+//        scores.add(currentCandidate,new ScoreIndexPair(score, currentCandidate));
+        scores.add(currentCandidate, new Candidate(weights, score));
         currentCandidate++;
 
-        if (currentCandidate == population) {
+        if (scores.size() == population) {
             findFittestCandidate();
             createNewGeneration();
         } else {
-            PlayerSkeleton.setMultiplierWeights(chromosomes[currentCandidate]);
+            PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));
         }
     }
 
@@ -168,7 +145,7 @@ public class GeneticAlgorithm {
     private String aToS(float[] a) {
         String s = "";
         for (int i = 0; i < a.length; i++) {
-            s += Float.toString(((float) Math.round(a[i] * 100)) / 100);
+            s += Float.toString(((float) Math.round(a[i] * 1000)) / 1000);
             if (i != a.length - 1) {
                 s += ", ";
             }
@@ -176,22 +153,49 @@ public class GeneticAlgorithm {
         return "[" + s + "]";
     }
 
-    private float[] mutateCandidateRandomly(float[] candidate) {
+    private float[] mutateCandidateRandomly(float[] candidate, float mutationRate, float mutationAmount) {
         float[] mutant = new float[NUM_CHROMOSOMES];
 
-        // Pick at random a mixed subset of the two winners and make it the new chromosome
         for (int k = 0; k < NUM_CHROMOSOMES; k++) {
-
+            float change = 0;
             // Mutation
-            boolean mutate = rnd.nextFloat() < mutation_rate;
+            boolean mutate = rnd.nextFloat() < mutationRate;
             if (mutate) {
                 // Change this value anywhere from -5 to 5
-                float change = rnd.nextFloat() * MUTATION_AMOUNT * 2 - MUTATION_AMOUNT;
-                mutant[k] = candidate[k] + change;
+                change = rnd.nextFloat() * mutationAmount * 2 - mutationAmount;
+
             }
+
+            mutant[k] = candidate[k] + change;
         }
 
-        return mutant;
+        return normalize(mutant);
+    }
+
+    private float[] mutateByCrossoverCandidates(Candidate candidate1, Candidate candidate2) {
+        float[] mutant = new float[NUM_CHROMOSOMES];
+
+        for(int i = 0; i < NUM_CHROMOSOMES; i++) {
+            mutant[i] = candidate1.getFitnessScore() * candidate1.getMultiplierWeights()[i]
+                      + candidate2.getFitnessScore() * candidate2.getMultiplierWeights()[i];
+        }
+
+        return normalize(mutant);
+    }
+
+    public float[] normalize(float[] candidate) {
+        float normal = 0;
+        for(float weight : candidate) {
+            normal += weight * weight;
+        }
+
+        normal = (float) Math.sqrt((double) normal);
+
+        for(int i = 0; i < candidate.length; i++) {
+            candidate[i] /= normal;
+        }
+
+        return candidate;
     }
 
 
