@@ -392,11 +392,17 @@ public class PlayerSkeleton {
 			int glitchCount = 1;
 			field[r][c] = -1;
 
-
+			/*
 			for (int i = r - 1; i <= r + 1; i++) {
 				for (int j = c - 1; j <= c + 1; j++) {
 					glitchCount += getLocalGlitchSize(field, i, j);
 				}
+			}
+			*/
+
+			for (int i = -1; i <= 1; i++) {
+				glitchCount += getLocalGlitchSize(field, r + i, c);
+				glitchCount += getLocalGlitchSize(field, r, c + i);
 			}
 
 			return glitchCount;
