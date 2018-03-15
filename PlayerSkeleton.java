@@ -26,8 +26,8 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 1000;
-	private static final int LINES_LIMIT = 5000;
+	private static final int DATA_SIZE = 10000;
+	private static final int TURNS_LIMIT = 500;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -88,7 +88,7 @@ public class PlayerSkeleton {
 				visualize(s);
 			} else {
 				PlayerSkeleton p = new PlayerSkeleton();
-				while (!s.hasLost() && (s.getRowsCleared() < LINES_LIMIT)) {
+				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
@@ -333,7 +333,7 @@ public class PlayerSkeleton {
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field);
+					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getHoles(field);
 		}
 
 		// Checks for how bumpy the top is
@@ -366,6 +366,30 @@ public class PlayerSkeleton {
 				}
 			}
 			return glitchCount;
+		}
+
+		private int getHoles(int[][] field) {
+			int count = 0;
+
+			int rows = field.length;
+			int cols = field[0].length;
+
+			for(int c = 0; c < cols; c++) {
+				boolean capped = false;
+				for(int r = rows - 1; r >= 0; r--) {
+					if(!isEmpty(field[r][c])) {
+						capped = true;
+					} else if (isEmpty(field[r][c]) && capped)
+						count++;
+				}
+
+			}
+
+			return count;
+		}
+
+		private boolean isEmpty(int grid) {
+			return grid == 0;
 		}
 	}
 

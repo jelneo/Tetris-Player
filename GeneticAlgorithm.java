@@ -6,7 +6,9 @@ import java.util.*;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 5;
     private static final float PERCENTAGE_OFFSPRING = 0.3f;
-    private static final float MUTATION_AMOUNT = 0.2f;
+    private static final float MUTATION_AMOUNT = 0.35f;
+    // we want the first mutation to occur with higher probability to get out of local maximas
+    private static final float INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
     private int generation = 1;
     private final float MUTATION_RATE = 0.05f;
@@ -34,7 +36,11 @@ public class GeneticAlgorithm {
         chromosomes = new ArrayList<>(population);
         chromosomes.add(weights);
         for (int i = 1; i < population; i++) {
-            chromosomes.add(mutateCandidateRandomly(weights, 1, MUTATION_AMOUNT * 2));
+            /* In this portion below, the first line mutates the candidate from parameter.txt slightly to create the
+               The second line just generates the population randomly
+            */
+            chromosomes.add(mutateCandidateRandomly(weights, 1, INITIAL_MUTATION_AMOUNT));
+//            chromosomes.add(createRandomChromosome());
         }
     }
 
@@ -51,8 +57,7 @@ public class GeneticAlgorithm {
      * Create new generation
      */
     private void createNewGeneration() {
-//        List<float[]> winners = new ArrayList<>();
-        List<Candidate> winners = null;
+        List<Candidate> winners;
         Collections.sort(scores);
         // Pair 1 with 2, 3 with 4, etc.
         winners = scores.subList(population / 2, population - 1);
@@ -101,7 +106,7 @@ public class GeneticAlgorithm {
 
         if (maxScore > fittestScore) {
             fittestScore = maxScore;
-            for (int  i = 0; i < NUM_CHROMOSOMES ; i++) {
+            for (int i = 0; i < NUM_CHROMOSOMES ; i++) {
                 fittestCandidate[i] = chromosomes.get(maxIndex)[i];
             }
             fittestGeneration = generation;
@@ -117,7 +122,6 @@ public class GeneticAlgorithm {
         String s = aToS(chromosomes.get(currentCandidate));
         String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
 //        System.out.println(string);
-//        scores.add(currentCandidate,new ScoreIndexPair(score, currentCandidate));
         scores.add(currentCandidate, new Candidate(weights, score));
         currentCandidate++;
 
@@ -172,6 +176,9 @@ public class GeneticAlgorithm {
         return normalize(mutant);
     }
 
+    /**
+     * Takes in two candidates and generate new values weighted on their fitness scores.
+     */
     private float[] mutateByCrossoverCandidates(Candidate candidate1, Candidate candidate2) {
         float[] mutant = new float[NUM_CHROMOSOMES];
 
@@ -183,7 +190,10 @@ public class GeneticAlgorithm {
         return normalize(mutant);
     }
 
-    public float[] normalize(float[] candidate) {
+    /**
+     * Normalizes the weights of candidate vectors to fit within a unit n-sphere.
+     */
+    private float[] normalize(float[] candidate) {
         float normal = 0;
         for(float weight : candidate) {
             normal += weight * weight;
