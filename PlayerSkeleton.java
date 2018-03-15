@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.IOException;
 
 public class PlayerSkeleton {
 
@@ -18,7 +17,7 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static float[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f};
+	private static float[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f};
 
 	private static String[] multiplierNames = {
 		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL"
@@ -27,14 +26,16 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 30;
+	private static final int DATA_SIZE = 10000;
+	private static final int TURNS_LIMIT = 500;
+	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
 	/**
 	 * Picks the move with the highest value.
 	 *
-	 * @param s - present state
-	 * @param legalMoves - List of legal moves
+	 * @param s present state
+	 * @param legalMoves List of legal moves
 	 * @return the move that has the maximum value based on
 	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
 	 */
@@ -65,6 +66,7 @@ public class PlayerSkeleton {
 		
 		executeDataSet();
 
+		multiplierWeights = geneticAlgorithm.getFittestCandidate();
 		printParameters();
 		saveParameters();
 	}
@@ -78,6 +80,7 @@ public class PlayerSkeleton {
 		int sum = 0;
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
+		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
 		while(counter-- > 0) {
 			State s = new State();
 
@@ -85,16 +88,17 @@ public class PlayerSkeleton {
 				visualize(s);
 			} else {
 				PlayerSkeleton p = new PlayerSkeleton();
-				while (!s.hasLost()) {
+				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
-
+			geneticAlgorithm.sendScore(multiplierWeights, s.getRowsCleared());
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
+
 			sum += s.getRowsCleared();
 			var += s.getRowsCleared() * s.getRowsCleared();
-			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
+//			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
 
 		var -= ((double) sum) * ((double) sum) / DATA_SIZE;
@@ -134,6 +138,13 @@ public class PlayerSkeleton {
 		window.dispose();
 	}
 
+	protected static void setMultiplierWeights(float[] newWeights) {
+//        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
+		for (int i = 0; i < NUM_PARAMETERS; i++) {
+		    multiplierWeights[i] = newWeights[i];
+        }
+//        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
+    }
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameter.txt";
@@ -322,14 +333,14 @@ public class PlayerSkeleton {
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field);
+					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getHoles(field);
 		}
 
 		// Checks for how bumpy the top is
 		public int getBumpiness(int[] top) {
 			int bumpiness = 0;
 			for (int i = 0; i < top.length - 1; i++) {
-				bumpiness += Math.abs(top[i] - top[i + 1]);
+				bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
 			}
 
 			return bumpiness;
@@ -356,6 +367,30 @@ public class PlayerSkeleton {
 				}
 			}
 			return glitchCount;
+		}
+
+		private int getHoles(int[][] field) {
+			int count = 0;
+
+			int rows = field.length;
+			int cols = field[0].length;
+
+			for(int c = 0; c < cols; c++) {
+				boolean capped = false;
+				for(int r = rows - 1; r >= 0; r--) {
+					if(!isEmpty(field[r][c])) {
+						capped = true;
+					} else if (isEmpty(field[r][c]) && capped)
+						count++;
+				}
+
+			}
+
+			return count;
+		}
+
+		private boolean isEmpty(int grid) {
+			return grid == 0;
 		}
 	}
 
