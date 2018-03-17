@@ -20,7 +20,6 @@ public class GeneticAlgorithm {
     private static float fittestScore = Float.NEGATIVE_INFINITY;
     private static int fittestGeneration = 0;
     private static int fittestIndex = 0;
-    private static Candidate bestCandidate = null;
 
 
     public GeneticAlgorithm(List<float[]> weights) {
@@ -28,27 +27,22 @@ public class GeneticAlgorithm {
     }
 
     /**
-     * Initialise chromosomes with values from -5 to 5.
-     * @param weights the weights of the features defined in {@code PlayerSkeleton.java}
+     * Initialise chromosomes with values from parameters.txt.
+     * parameters.txt should have a population to be loaded into {@code chromosomes}, else a new population has to be
+     * generated using {@link #createRandomChromosome()}
+     * @param weights the weights of the population in parameters.txt
      */
-    private void setUpChromosomes(float[] weights) {
-        chromosomes = new ArrayList<>(population);
-        chromosomes.add(weights);
-        for (int i = 1; i < population; i++) {
-            /* In this portion below, the first line mutates the candidate from parameter.txt slightly to create the
-               The second line just generates the population randomly
-            */
-            chromosomes.add(mutateCandidateRandomly(weights, MUTATION_RATE, INITIAL_MUTATION_AMOUNT));
-//            chromosomes.add(createRandomChromosome());
-        }
-    }
-
     private void setUpChromosomes(List<float[]> weights) {
         chromosomes.addAll(weights);
         population = weights.size();
         System.out.println("Population: " +  population);
     }
 
+    /**
+     * Creates random chromosomes with in the range -0.5 to 0.5.
+     * This function is only used when there is no initial population in parameters.txt.
+     * @return a normalized set of NUM_CHROMOSOMES random chromosomes
+     */
     private float[] createRandomChromosome() {
         float[] randomChromosome = new float[NUM_CHROMOSOMES];
         for(int i = 0; i < randomChromosome.length; i++) {
@@ -105,8 +99,6 @@ public class GeneticAlgorithm {
             chromosomes.add(offspring_population.get(k));
         }
 
-
-
         generation++;
         currentCandidate = 0;
         scores = new ArrayList<>(population);
@@ -126,7 +118,7 @@ public class GeneticAlgorithm {
                 maxScore = currScore;
             }
         }
-        System.out.println("local Generation " + generation + " candid. " + (maxIndex+1) + " chosen (max score: " + maxScore + "): " + aToS(chromosomes.get(maxIndex)));
+        System.out.println("local Generation " + generation + " candid. " + (maxIndex+1) + " chosen (max score: " + maxScore + "): " + arrayToString(chromosomes.get(maxIndex)));
 
         if (maxScore > fittestScore) {
             fittestScore = maxScore;
@@ -143,7 +135,7 @@ public class GeneticAlgorithm {
      * @param score from using a set of multiplier weights
      */
     public void sendScore(float[] weights, float score) {
-        String s = aToS(chromosomes.get(currentCandidate));
+        String s = arrayToString(chromosomes.get(currentCandidate));
         String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
         System.out.println(string);
         scores.add(currentCandidate, new Candidate(weights, score));
@@ -163,7 +155,7 @@ public class GeneticAlgorithm {
      * Returns the best set of multiplier weights
      */
     public float[] getFittestCandidate() {
-        System.out.println("fittest score: " + fittestScore + " from generation " + fittestGeneration + " candid. " + (fittestIndex+1)+" : " + aToS(fittestCandidate));
+        System.out.println("fittest score: " + fittestScore + " from generation " + fittestGeneration + " candid. " + (fittestIndex+1)+" : " + arrayToString(fittestCandidate));
         return fittestCandidate;
     }
 
@@ -179,7 +171,7 @@ public class GeneticAlgorithm {
      * @param a a float[] array
      * @return an properly formatted string of array contents
      */
-    private String aToS(float[] a) {
+    private String arrayToString(float[] a) {
         String s = "";
         for (int i = 0; i < a.length; i++) {
             s += Float.toString(((float) Math.round(a[i] * 1000)) / 1000);
@@ -190,6 +182,13 @@ public class GeneticAlgorithm {
         return "[" + s + "]";
     }
 
+    /**
+     * Mutate a candidate randomly with a mutation rate of {@code mutationRate}
+     * @param candidate candidate to be mutated
+     * @param mutationRate mutation rate
+     * @param mutationAmount a float number that is used to mutate the chromosome
+     * @return
+     */
     private float[] mutateCandidateRandomly(float[] candidate, float mutationRate, float mutationAmount) {
         float[] mutant = new float[NUM_CHROMOSOMES];
 
@@ -244,8 +243,5 @@ public class GeneticAlgorithm {
             return candidate;
         }
     }
-
-
-
 
 }

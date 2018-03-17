@@ -160,10 +160,10 @@ public class PlayerSkeleton {
     }
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameter.txt";
+	private static final String PARAM_FILE_NAME = "parameters.txt";
 
 	/**
-	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file. If file is empty, then use default parameters.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -173,7 +173,7 @@ public class PlayerSkeleton {
 		String line = null;
 		Integer size;
 
-		// read first line from parameter.txt
+		// read first line from parameters.txt
 		try {
 			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
@@ -183,7 +183,7 @@ public class PlayerSkeleton {
 			line = bufferedReader.readLine();
 
 			if (line == null) {
-				System.out.println("parameter.txt is empty, using default values");
+				System.out.println(PARAM_FILE_NAME + " is empty, using default values");
 			} else {
 				size = parseInt(line);
 				populationMultipliers = new ArrayList<>();
@@ -232,7 +232,7 @@ public class PlayerSkeleton {
 	}
 
 	/**
-	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
