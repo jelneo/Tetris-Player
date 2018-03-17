@@ -406,50 +406,6 @@ public class PlayerSkeleton {
 			return totalHeight;
 		}
 
-		// Returns the total number of glitch tiles
-		public int getGlitchCount(int[][] field) {
-			int glitchCount = 0;
-			for (int c = 0; c < field[0].length; c++) {
-				for (int r = 0; r < top[c]; r++) {
-					if (field[r][c] == 0) {
-						glitchCount++;
-					}
-				}
-			}
-
-			return glitchCount;
-		}
-
-		/**
-		 * Recursive counts the empty holes adjacent to the current square
-		 *
-		 * @param field - field to count the empty squares from.
-		 * @param r - row of the square
-		 * @param c - column of the square
-		 * @return # of localized glitches
-		 */
-		private int getLocalGlitchSize(int[][] field, int r, int c) {
-			if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
-				return 0;
-			}
-
-			if (field[r][c] != 0) {
-				return 0;
-			}
-
-			int glitchCount = 1;
-			field[r][c] = -1;
-
-
-			for (int i = r - 1; i <= r + 1; i++) {
-				for (int j = c - 1; j <= c + 1; j++) {
-					glitchCount += getLocalGlitchSize(field, i, j);
-				}
-			}
-
-			return glitchCount;
-		}
-
 		private int getHoles(int[][] field) {
 			int count = 0;
 
@@ -495,7 +451,6 @@ public class PlayerSkeleton {
 
 			return count;
 		}
-
 
 		private boolean isEmpty(int grid) {
 			return grid == 0;
