@@ -19,7 +19,9 @@ public class Candidate implements Comparable<Candidate>{
     private float fitnessScore = 0;
 
     public Candidate(float[] weights, float fitness) {
-        multiplierWeights = weights;
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            multiplierWeights[i] = weights[i];
+        }
         fitnessScore = fitness;
     }
 

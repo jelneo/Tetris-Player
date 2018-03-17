@@ -6,16 +6,15 @@ import java.util.*;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 5;
     private static final float PERCENTAGE_OFFSPRING = 0.3f;
-    private static final float MUTATION_AMOUNT = 0.35f;
+    private static final float MUTATION_AMOUNT = 0.2f;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final float INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
     private int generation = 1;
-    private final float MUTATION_RATE = 0.05f;
-    private List<float[]> chromosomes;
+    private final float MUTATION_RATE = 0.2f;
+    private List<float[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
-    private ArrayList<Candidate> scores = new ArrayList<>(population);
-    List<float[]> offspring_population = new ArrayList<>(population/2);
+    private static ArrayList<Candidate> scores = new ArrayList<>();
     private Random rnd = new Random();
     private static float[] fittestCandidate = new float[NUM_CHROMOSOMES];
     private static float fittestScore = Float.NEGATIVE_INFINITY;
@@ -24,7 +23,7 @@ public class GeneticAlgorithm {
     private static Candidate bestCandidate = null;
 
 
-    public GeneticAlgorithm(float[] weights) {
+    public GeneticAlgorithm(List<float[]> weights) {
         setUpChromosomes(weights);
     }
 
@@ -39,9 +38,15 @@ public class GeneticAlgorithm {
             /* In this portion below, the first line mutates the candidate from parameter.txt slightly to create the
                The second line just generates the population randomly
             */
-            chromosomes.add(mutateCandidateRandomly(weights, 1, INITIAL_MUTATION_AMOUNT));
+            chromosomes.add(mutateCandidateRandomly(weights, MUTATION_RATE, INITIAL_MUTATION_AMOUNT));
 //            chromosomes.add(createRandomChromosome());
         }
+    }
+
+    private void setUpChromosomes(List<float[]> weights) {
+        chromosomes.addAll(weights);
+        population = weights.size();
+        System.out.println("Population: " +  population);
     }
 
     private float[] createRandomChromosome() {
@@ -57,32 +62,51 @@ public class GeneticAlgorithm {
      * Create new generation
      */
     private void createNewGeneration() {
-        List<Candidate> winners;
         Collections.sort(scores);
         // Pair 1 with 2, 3 with 4, etc.
-        winners = scores.subList(population / 2, population - 1);
 
         List<float[]> offspring_population = new ArrayList<>(population/2);
         // Pair up two winners at a time
-        for (int i = 0; i < (winners.size() / 2); i++) {
-            Candidate winner1 = winners.get(i);
-            Candidate winner2 = winners.get(i + 1);
+        for (int i = 0; i < population - 1; i++) {
+            Candidate winner1 = scores.get(population - i - 1);
+            Candidate winner2 = scores.get(population - i - 2);
 
-            offspring_population.add(
-                    mutateCandidateRandomly(
-                            mutateByCrossoverCandidates(winner1, winner2),
-                            MUTATION_RATE,
-                            MUTATION_AMOUNT));
+//            System.out.println(Arrays.toString(winner1.getMultiplierWeights()));
+//            System.out.println(Arrays.toString(winner2.getMultiplierWeights()));
+
+            float[] firstChild = mutateByCrossoverCandidates(winner1, winner2);
+//            System.out.println("first child: " + Arrays.toString(firstChild));
+//            offspring_population.add(firstChild);
+
+            for (int j = 0; j < 2; j++) {
+                offspring_population.add(
+                        mutateCandidateRandomly(firstChild,
+                                MUTATION_RATE,
+                                MUTATION_AMOUNT));
+            }
         }
 
         // Shuffle the offspring population.
         Collections.shuffle(offspring_population, rnd);
 
         // Replace the least fit PERCENTAGE_OFFSPRING of the population
-        chromosomes = chromosomes.subList((int) PERCENTAGE_OFFSPRING * population, population - 1);
-        for(int i = 0; chromosomes.size() < population && i < offspring_population.size(); i++ ) {
-            chromosomes.add(offspring_population.get(i));
+//        ArrayList<float[]> newChromosomes = new ArrayList<>(population);
+        int numberOfWinners = (int) (population * (1 - PERCENTAGE_OFFSPRING)) + 1;
+
+        System.out.println("SIZE: " + offspring_population.size());
+
+        chromosomes = new ArrayList<>();
+
+        for(int i = 0; i < numberOfWinners; i++) {
+            chromosomes.add(scores.get(population - 1 - i).getMultiplierWeights());
         }
+
+        for(int k = 0; k < population - numberOfWinners; k++) {
+            chromosomes.add(offspring_population.get(k));
+        }
+
+
+
         generation++;
         currentCandidate = 0;
         scores = new ArrayList<>(population);
@@ -121,14 +145,16 @@ public class GeneticAlgorithm {
     public void sendScore(float[] weights, float score) {
         String s = aToS(chromosomes.get(currentCandidate));
         String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
-//        System.out.println(string);
+        System.out.println(string);
         scores.add(currentCandidate, new Candidate(weights, score));
         currentCandidate++;
 
         if (scores.size() == population) {
             findFittestCandidate();
             createNewGeneration();
+            PlayerSkeleton.setMultiplierWeights(chromosomes.get(0));
         } else {
+//            System.out.println("Current chromosome: " + Arrays.toString(chromosomes.get(currentCandidate)));
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));
         }
     }
@@ -139,6 +165,13 @@ public class GeneticAlgorithm {
     public float[] getFittestCandidate() {
         System.out.println("fittest score: " + fittestScore + " from generation " + fittestGeneration + " candid. " + (fittestIndex+1)+" : " + aToS(fittestCandidate));
         return fittestCandidate;
+    }
+
+    /**
+     * Returns the latest population
+     */
+    public List<float[]> getLatestPopulation() {
+        return chromosomes;
     }
 
     /**
@@ -201,11 +234,15 @@ public class GeneticAlgorithm {
 
         normal = (float) Math.sqrt((double) normal);
 
-        for(int i = 0; i < candidate.length; i++) {
-            candidate[i] /= normal;
-        }
+        if (normal == 0) {
+            return candidate;
+        } else {
+            for (int i = 0; i < candidate.length; i++) {
+                candidate[i] /= normal;
+            }
 
-        return candidate;
+            return candidate;
+        }
     }
 
 
