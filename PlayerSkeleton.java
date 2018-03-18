@@ -35,8 +35,8 @@ public class PlayerSkeleton {
 
 	private static boolean visualMode = false;
 	private static final int DATA_SIZE = 1000;
-	private static final int TURNS_LIMIT = 400;
-	private static final int SAMPLING_INTERVAL = 50;
+	private static final int TURNS_LIMIT = 800;
+	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -109,7 +109,7 @@ public class PlayerSkeleton {
 					}
 				}
 			}
-			geneticAlgorithm.sendScore(multiplierWeights, score);
+			geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
 			maxScore = Math.max(maxScore, score);
 			minScore = Math.min(minScore, score);
 
@@ -164,7 +164,7 @@ public class PlayerSkeleton {
     }
 
     /********************************* Score calculation *********************************************/
-    private static final int MAX_HEALTHY_HEIGHT = 8;
+    private static final int MAX_HEALTHY_HEIGHT = 7;
     private static final int HOLE_MULTIPLIER = -4;
     private static int getScore(State s) {
 		int maxHeight = getMaxHeight(s);
