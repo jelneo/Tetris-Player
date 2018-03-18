@@ -90,6 +90,7 @@ public class PlayerSkeleton {
 		int sum = 0;
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
+
 		geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
 		multiplierWeights = populationMultipliers.get(0);
 		while(counter-- > 0) {
@@ -103,6 +104,7 @@ public class PlayerSkeleton {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 				}
 			}
+
 			geneticAlgorithm.sendScore(multiplierWeights, s.getRowsCleared() + 1); // no 0 scores
 			maxScore = Math.max(maxScore, s.getRowsCleared());
 			minScore = Math.min(minScore, s.getRowsCleared());
@@ -158,10 +160,10 @@ public class PlayerSkeleton {
     }
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameter.txt";
+	private static final String PARAM_FILE_NAME = "parameters.txt";
 
 	/**
-	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file. If file is empty, then use default parameters.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -171,7 +173,7 @@ public class PlayerSkeleton {
 		String line = null;
 		Integer size;
 
-		// read firstx line from parameter.txt
+		// read first line from parameters.txt
 		try {
 			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
@@ -181,7 +183,7 @@ public class PlayerSkeleton {
 			line = bufferedReader.readLine();
 
 			if (line == null) {
-				System.out.println("parameter.txt is empty, using default values");
+				System.out.println(PARAM_FILE_NAME + " is empty, using default values");
 			} else {
 				size = parseInt(line);
 				populationMultipliers = new ArrayList<>();
@@ -230,7 +232,7 @@ public class PlayerSkeleton {
 	}
 
 	/**
-	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -404,19 +406,6 @@ public class PlayerSkeleton {
 			return totalHeight;
 		}
 
-		// Returns the total number of glitch tiles
-		public int getGlitchCount(int[][] field) {
-			int glitchCount = 0;
-			for (int c = 0; c < field[0].length; c++) {
-				for (int r = 0; r < top[c]; r++) {
-					if (field[r][c] == 0) {
-						glitchCount++;
-					}
-				}
-			}
-			return glitchCount;
-		}
-
 		private int getHoles(int[][] field) {
 			int count = 0;
 
@@ -462,7 +451,6 @@ public class PlayerSkeleton {
 
 			return count;
 		}
-
 
 		private boolean isEmpty(int grid) {
 			return grid == 0;
