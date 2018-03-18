@@ -83,6 +83,7 @@ public class PlayerSkeleton {
 		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
 		while(counter-- > 0) {
 			State s = new State();
+			int score = 0;
 
 			if (visualMode) {
 				visualize(s);
@@ -90,14 +91,17 @@ public class PlayerSkeleton {
 				PlayerSkeleton p = new PlayerSkeleton();
 				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
+					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+						score += getScore(s);
+					}
 				}
 			}
-			geneticAlgorithm.sendScore(multiplierWeights, s.getRowsCleared());
-			maxScore = Math.max(maxScore, s.getRowsCleared());
-			minScore = Math.min(minScore, s.getRowsCleared());
+			geneticAlgorithm.sendScore(multiplierWeights, score);
+			maxScore = Math.max(maxScore, score);
+			minScore = Math.min(minScore, score);
 
-			sum += s.getRowsCleared();
-			var += s.getRowsCleared() * s.getRowsCleared();
+			sum += score;
+			var += score * score;
 //			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
 
@@ -145,6 +149,56 @@ public class PlayerSkeleton {
         }
 //        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
     }
+
+    /********************************* Score calculation *********************************************/
+    private static int getScore(State s) {
+    	// Increasing penalty imposed on heights greater than 8. 8 or less is considered healthy.
+		int maxHeight = getMaxHeight(s);
+		int heightBonus = (s.getField().length - 8) * (s.getField().length - 8);
+		if (maxHeight > 8) {
+			heightBonus -= (maxHeight * maxHeight);
+		}
+    	return heightBonus - 5 * getHoles(s);
+	}
+
+	private static int getMaxHeight(State s) {
+    	return getMax(s.getTop());
+	}
+
+	private static int getMax(int[] arr) {
+    	int max = 0;
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i] > max) {
+				max = arr[i];
+			}
+		}
+		return max;
+	}
+
+	private static int getHoles(State s) {
+		int count = 0;
+		int[][] field = s.getField();
+
+		int rows = field.length;
+		int cols = field[0].length;
+
+		for(int c = 0; c < cols; c++) {
+			boolean capped = false;
+			for(int r = rows - 1; r >= 0; r--) {
+				if(!isEmpty(field[r][c])) {
+					capped = true;
+				} else if (isEmpty(field[r][c]) && capped)
+					count++;
+			}
+
+		}
+
+		return count;
+	}
+
+	private static boolean isEmpty(int grid) {
+		return grid == 0;
+	}
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameter.txt";
