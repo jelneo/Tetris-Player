@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 import java.io.FileWriter;
@@ -5,7 +8,10 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 
+import static java.lang.Integer.parseInt;
+
 public class PlayerSkeleton {
+
 
 	/********************************* Multipliers to determine value of simulated move *********************************/
 	private static final int NUM_PARAMETERS = 5;
@@ -18,6 +24,8 @@ public class PlayerSkeleton {
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
 	private static float[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f};
+	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1";
+	private static List<float[]> populationMultipliers;
 
 	private static String[] multiplierNames = {
 		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL"
@@ -26,8 +34,9 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 10000;
-	private static final int TURNS_LIMIT = 500;
+	private static final int DATA_SIZE = 1000;
+	private static final int TURNS_LIMIT = 1000;
+	private static final int SAMPLING_INTERVAL = 200;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -67,6 +76,8 @@ public class PlayerSkeleton {
 		executeDataSet();
 
 		multiplierWeights = geneticAlgorithm.getFittestCandidate();
+		populationMultipliers = geneticAlgorithm.getLatestPopulation();
+
 		printParameters();
 		saveParameters();
 	}
@@ -80,7 +91,9 @@ public class PlayerSkeleton {
 		int sum = 0;
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
-		geneticAlgorithm = new GeneticAlgorithm(multiplierWeights);
+
+		geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
+		multiplierWeights = populationMultipliers.get(0);
 		while(counter-- > 0) {
 			State s = new State();
 			int score = 0;
@@ -201,10 +214,10 @@ public class PlayerSkeleton {
 	}
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameter.txt";
+	private static final String PARAM_FILE_NAME = "parameters.txt";
 
 	/**
-	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file. If file is empty, then use default parameters.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -212,8 +225,9 @@ public class PlayerSkeleton {
 	private static void setParameters() {
 		// This will reference one line at a time
 		String line = null;
+		Integer size;
 
-		// read first line from parameter.txt
+		// read first line from parameters.txt
 		try {
 			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
@@ -222,27 +236,57 @@ public class PlayerSkeleton {
 
 			line = bufferedReader.readLine();
 
+			if (line == null) {
+				System.out.println(PARAM_FILE_NAME + " is empty, using default values");
+			} else {
+				size = parseInt(line);
+				populationMultipliers = new ArrayList<>();
+				for (int i = 0; i < size; i++) {
+					line = bufferedReader.readLine();
+					String[] values;
+					if (line == null) {
+//						setParameters(DEFAULT_PARAMETERS.split(" "));
+						values = DEFAULT_PARAMETERS.split(" ");
+					} else {
+						values = line.split(" ");
+					}
+
+					populationMultipliers.add(stringToFloat(values));
+
+				}
+
+				System.out.println("========================================================");
+				for (int i = 0; i < populationMultipliers.size(); i++) {
+					System.out.println(Arrays.toString(populationMultipliers.get(i)));
+				}
+			}
+
 			bufferedReader.close();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 
-		if (line == null) {
-			System.out.println("parameter.txt is empty, using default values");
-		} else {
-			String[] values = line.split(" ");
-			setParameters(values);
-		}
 	}
 
 	private static void setParameters(String[] values) {
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
+			System.out.println(values[i]);
 			multiplierWeights[i] = Float.parseFloat(values[i]);
+			System.out.println(multiplierWeights[i]);
 		}
 	}
 
+	private static float[] stringToFloat(String[] values) {
+		float[] result = new float[NUM_PARAMETERS];
+		for (int i = 0; i < NUM_PARAMETERS; i++) {
+			result[i] = Float.parseFloat(values[i]);
+		}
+
+		return result;
+	}
+
 	/**
-	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameter.txt in same directory as
+	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -253,13 +297,19 @@ public class PlayerSkeleton {
 
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-			String line = "" + multiplierWeights[0];
-			for (int i = 1; i < NUM_PARAMETERS; i++) {
-				line += " " + multiplierWeights[i];
-			}
-			line += "\n";
-
+			String line = populationMultipliers.size() + "\n";
 			bufferedWriter.write(line);
+
+			for(int i = 0; i < populationMultipliers.size(); i++) {
+				multiplierWeights = populationMultipliers.get(i);
+				line = "" + multiplierWeights[0];
+				for (int j = 1; j < NUM_PARAMETERS; j++) {
+					line += " " + multiplierWeights[j];
+				}
+				line += "\n";
+
+				bufferedWriter.write(line);
+			}
 			bufferedWriter.close();
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -386,7 +436,7 @@ public class PlayerSkeleton {
 			return multiplierWeights[BUMPINESS_MULT_INDEX] * getBumpiness(top)
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
-					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
+					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * getBalance(field)
 					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getHoles(field);
 		}
 
@@ -410,19 +460,6 @@ public class PlayerSkeleton {
 			return totalHeight;
 		}
 
-		// Returns the total number of glitch tiles
-		public int getGlitchCount(int[][] field) {
-			int glitchCount = 0;
-			for (int c = 0; c < field[0].length; c++) {
-				for (int r = 0; r < top[c]; r++) {
-					if (field[r][c] == 0) {
-						glitchCount++;
-					}
-				}
-			}
-			return glitchCount;
-		}
-
 		private int getHoles(int[][] field) {
 			int count = 0;
 
@@ -438,6 +475,32 @@ public class PlayerSkeleton {
 						count++;
 				}
 
+			}
+
+			return count;
+		}
+
+		private int getBalance(int[][] field) {
+			int cols = field[0].length;
+
+			int balanceness = 0;
+
+			for(int c = 0; c < cols - 1; c++) {
+				balanceness += Math.abs(getGridsInCol(field, c) - getGridsInCol(field, c + 1));
+			}
+
+			return balanceness;
+		}
+
+		private int getGridsInCol(int[][] field, int col) {
+			int count = 0;
+
+			int rows = field.length;
+
+			for(int r = 0; r < rows; r++) {
+				if (!isEmpty(field[r][col])) {
+					count++;
+				}
 			}
 
 			return count;
