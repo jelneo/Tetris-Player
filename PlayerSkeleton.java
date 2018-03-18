@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 import java.io.FileWriter;
@@ -35,8 +36,8 @@ public class PlayerSkeleton {
 
 	private static boolean visualMode = false;
 	private static final int DATA_SIZE = 1000;
-	private static final int TURNS_LIMIT = 1000;
-	private static final int SAMPLING_INTERVAL = 200;
+	private static final int TURNS_LIMIT = 400;
+	private static final int SAMPLING_INTERVAL = 50;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -164,14 +165,17 @@ public class PlayerSkeleton {
     }
 
     /********************************* Score calculation *********************************************/
+    private static final int MAX_HEALTHY_HEIGHT = 8;
+    private static final int HOLE_MULTIPLIER = -4;
     private static int getScore(State s) {
-    	// Increasing penalty imposed on heights greater than 8. 8 or less is considered healthy.
 		int maxHeight = getMaxHeight(s);
-		int heightBonus = (s.getField().length - 8) * (s.getField().length - 8);
-		if (maxHeight > 8) {
+		// Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
+		int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
+		if (maxHeight > MAX_HEALTHY_HEIGHT) {
 			heightBonus -= (maxHeight * maxHeight);
 		}
-    	return heightBonus - 5 * getHoles(s);
+    	int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
+		return score;
 	}
 
 	private static int getMaxHeight(State s) {
@@ -191,17 +195,15 @@ public class PlayerSkeleton {
 	private static int getHoles(State s) {
 		int count = 0;
 		int[][] field = s.getField();
+		int[] top = s.getTop();
 
-		int rows = field.length;
 		int cols = field[0].length;
 
 		for(int c = 0; c < cols; c++) {
-			boolean capped = false;
-			for(int r = rows - 1; r >= 0; r--) {
-				if(!isEmpty(field[r][c])) {
-					capped = true;
-				} else if (isEmpty(field[r][c]) && capped)
+			for(int r = top[c]; r >= 0; r--) {
+				if (isEmpty(field[r][c])) {
 					count++;
+				}
 			}
 
 		}
@@ -212,6 +214,8 @@ public class PlayerSkeleton {
 	private static boolean isEmpty(int grid) {
 		return grid == 0;
 	}
+	/********************************* End of score calculation **************************************/
+
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameters.txt";
