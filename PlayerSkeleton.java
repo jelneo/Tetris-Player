@@ -23,9 +23,9 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static float[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f};
+	private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f};
 	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1";
-	private static List<float[]> populationMultipliers;
+	private static List<double[]> populationMultipliers;
 
 	private static String[] multiplierNames = {
 		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL"
@@ -51,7 +51,7 @@ public class PlayerSkeleton {
 	public int pickMove(State s, int[][] legalMoves) {
 
 		int maxIdx = 0;
-		float max = simulateMove(s, legalMoves[0]);
+		double max = simulateMove(s, legalMoves[0]);
 		for (int i = 1; i < legalMoves.length; i++) {
 			if (simulateMove(s, legalMoves[i]) > max) {
 				maxIdx = i;
@@ -62,8 +62,8 @@ public class PlayerSkeleton {
 		return maxIdx;
 	}
 
-	// Simulates a move and returns a float that allows for evaluation. The higher the better.
-	public float simulateMove(State s, int[] move) {
+	// Simulates a move and returns a double that allows for evaluation. The higher the better.
+	public double simulateMove(State s, int[] move) {
 		SimulatedState ss = new SimulatedState(s);
 		return ss.getMoveValue(move);
 	}
@@ -112,9 +112,9 @@ public class PlayerSkeleton {
 			geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
 			maxScore = Math.max(maxScore, score);
 			minScore = Math.min(minScore, score);
-
 			sum += score;
 			var += score * score;
+
 //			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
 
@@ -146,16 +146,17 @@ public class PlayerSkeleton {
 			// This creates a delay, making it harder to test multiple tests
 			/*
 			try {
-				Thread.sleep(10);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			*/
+
 		}
 		window.dispose();
 	}
 
-	protected static void setMultiplierWeights(float[] newWeights) {
+	protected static void setMultiplierWeights(double[] newWeights) {
 //        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
 		    multiplierWeights[i] = newWeights[i];
@@ -254,7 +255,7 @@ public class PlayerSkeleton {
 						values = line.split(" ");
 					}
 
-					populationMultipliers.add(stringToFloat(values));
+					populationMultipliers.add(stringToDouble(values));
 
 				}
 
@@ -274,15 +275,15 @@ public class PlayerSkeleton {
 	private static void setParameters(String[] values) {
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
 			System.out.println(values[i]);
-			multiplierWeights[i] = Float.parseFloat(values[i]);
+			multiplierWeights[i] = Double.parseDouble(values[i]);
 			System.out.println(multiplierWeights[i]);
 		}
 	}
 
-	private static float[] stringToFloat(String[] values) {
-		float[] result = new float[NUM_PARAMETERS];
+	private static double[] stringToDouble(String[] values) {
+		double[] result = new double[NUM_PARAMETERS];
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
-			result[i] = Float.parseFloat(values[i]);
+			result[i] = Double.parseDouble(values[i]);
 		}
 
 		return result;
@@ -365,11 +366,11 @@ public class PlayerSkeleton {
 		}
 
 		// Returns the value of making a move
-		public float getMoveValue(int move[]) {
+		public double getMoveValue(int move[]) {
 			return getMoveValue(move[ORIENT], move[SLOT]);
 		}
 
-		public float getMoveValue(int orient, int slot) {
+		public double getMoveValue(int orient, int slot) {
 			//height if the first column makes contact
 			int height = top[slot]-getpBottom()[nextPiece][orient][0];
 			//for each column beyond the first in the piece
@@ -443,6 +444,18 @@ public class PlayerSkeleton {
 					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getHoles(field);
 		}
 
+		// Heuristic 1
+		private int getMaxHeight(int[] top) {
+			int maxHeight = 0;
+			for (int i = 0; i < top.length; i++) {
+				if (maxHeight < top[i]) {
+					maxHeight = top[i];
+				}
+			}
+
+			return maxHeight;
+		}
+
 		// Checks for how bumpy the top is
 		public int getBumpiness(int[] top) {
 			int bumpiness = 0;
@@ -508,6 +521,87 @@ public class PlayerSkeleton {
 
 			return count;
 		}
+
+		// Heuristic 9
+		private int getBlocks() {
+			int rows = field.length;
+			int cols = field[0].length;
+			int blocks = 0;
+
+			for (int r = 0; r < rows; r++) {
+				for (int c = 0; c < cols; c++) {
+					if (!isEmpty(field[r][c])) {
+						blocks++;
+					}
+				}
+			}
+
+			return blocks;
+		}
+
+		// Heuristic 10
+		private int getWeightedBlocks() {
+			int rows = field.length;
+			int cols = field[0].length;
+			int blocks = 0;
+
+			for (int r = 0; r < rows; r++) {
+				for (int c = 0; c < cols; c++) {
+					if (!isEmpty(field[r][c])) {
+						blocks += r + 1;
+					}
+				}
+			}
+
+			return blocks;
+		}
+
+		// Heuristic 11
+		private int getRowTransitions() {
+			int rows = field.length;
+			int cols = field[0].length;
+			int transitions = 0;
+			for (int r = 0; r < rows; r++) {
+				boolean grid = true;
+				for (int c = 0; c < cols; c++) {
+					if (isEmpty(field[r][c]) && grid) {
+						grid = false;
+						transitions++;
+					} else if (!isEmpty(field[r][c]) && !grid) {
+						grid = true;
+						transitions++;
+					}
+				}
+
+				if (!grid) {
+					transitions++;
+				}
+			}
+
+			return transitions;
+		}
+
+		// Heuristic 12
+		private int getColTransitions(int[][] field) {
+			int rows = field.length;
+			int cols = field[0].length;
+			int transitions = 0;
+			for (int c = 0; c < cols; c++) {
+				boolean grid = true;
+				for (int r = 0; r < rows; r++) {
+					if (isEmpty(field[r][c]) && grid) {
+						grid = false;
+						transitions++;
+					} else if (!isEmpty(field[r][c]) && !grid) {
+						grid = true;
+						transitions++;
+					}
+				}
+			}
+
+			return transitions;
+		}
+
 
 		private boolean isEmpty(int grid) {
 			return grid == 0;
