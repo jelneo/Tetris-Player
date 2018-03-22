@@ -328,7 +328,6 @@ public class PlayerSkeleton {
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field)
 					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field, top)
 					+ multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles(field, top);
 
