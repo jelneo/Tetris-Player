@@ -34,9 +34,9 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 2000;
-	private static final int TURNS_LIMIT = 200000;
-	private static final int REPETITIONS = 3;
+	private static final int DATA_SIZE = 1000;
+	private static final int TURNS_LIMIT = 800;
+	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -96,29 +96,25 @@ public class PlayerSkeleton {
 		multiplierWeights = populationMultipliers.get(0);
 		while(counter-- > 0) {
 			State s = new State();
+			int score = 0;
 
-			int scoreSum = 0;
-
-			for (int i = 0; i < REPETITIONS; i++) {
-				if (visualMode) {
-					visualize(s);
-				} else {
-					PlayerSkeleton p = new PlayerSkeleton();
-					while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
-						s.makeMove(p.pickMove(s, s.legalMoves()));
+			if (visualMode) {
+				visualize(s);
+			} else {
+				PlayerSkeleton p = new PlayerSkeleton();
+				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
+					s.makeMove(p.pickMove(s, s.legalMoves()));
+					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+						score += getScore(s);
 					}
 				}
-
-				scoreSum += s.getRowsCleared() + 1;
-				s = new State();
 			}
+			geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
+			maxScore = Math.max(maxScore, score);
+			minScore = Math.min(minScore, score);
+			sum += score;
+			var += score * score;
 
-			geneticAlgorithm.sendScore(multiplierWeights, scoreSum / REPETITIONS); // no 0 scores
-			maxScore = Math.max(maxScore, s.getRowsCleared());
-			minScore = Math.min(minScore, s.getRowsCleared());
-
-			sum += s.getRowsCleared();
-			var += s.getRowsCleared() * s.getRowsCleared();
 //			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
 		}
 
@@ -167,6 +163,59 @@ public class PlayerSkeleton {
         }
 //        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
     }
+
+    /********************************* Score calculation *********************************************/
+    private static final int MAX_HEALTHY_HEIGHT = 7;
+    private static final int HOLE_MULTIPLIER = -4;
+    private static int getScore(State s) {
+		int maxHeight = getMaxHeight(s);
+		// Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
+		int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
+		if (maxHeight > MAX_HEALTHY_HEIGHT) {
+			heightBonus -= (maxHeight - MAX_HEALTHY_HEIGHT) * (maxHeight - MAX_HEALTHY_HEIGHT);
+		}
+    	int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
+		return score;
+	}
+
+	private static int getMaxHeight(State s) {
+    	return getMax(s.getTop());
+	}
+
+	private static int getMax(int[] arr) {
+    	int max = 0;
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i] > max) {
+				max = arr[i];
+			}
+		}
+		return max;
+	}
+
+	private static int getHoles(State s) {
+		int count = 0;
+		int[][] field = s.getField();
+		int[] top = s.getTop();
+
+		int cols = field[0].length;
+
+		for(int c = 0; c < cols; c++) {
+			for(int r = top[c]; r >= 0; r--) {
+				if (isEmpty(field[r][c])) {
+					count++;
+				}
+			}
+
+		}
+
+		return count;
+	}
+
+	private static boolean isEmpty(int grid) {
+		return grid == 0;
+	}
+	/********************************* End of score calculation **************************************/
+
 
 	/********************************* Parameter weight optimization *********************************/
 	private static final String PARAM_FILE_NAME = "parameters.txt";
@@ -387,10 +436,6 @@ public class PlayerSkeleton {
 					maxHeight = top[i];
 				}
 			}
-
-			System.out.println("A: " + getRowTransitions());
-//			System.out.println("B: " + getColTransitions(field));
-
 
 			return multiplierWeights[BUMPINESS_MULT_INDEX] * getBumpiness(top)
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
