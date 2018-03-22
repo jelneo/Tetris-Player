@@ -370,6 +370,20 @@ public class PlayerSkeleton {
 			return wellCount;
 		}
 
+		// Returns the maximum well depth
+		public int getMaxWellDepth(int[][] field) {
+			int maxDepth = 0;
+			for (int c = 0; c < field[0].length; c++) {
+				int currDepth = 0;
+				for(int r = top[c]; r < field.length; r++) {
+					if(field[r][c] == 0) break;
+					else if (isWell(field, r, c)) currDepth++;
+				}
+				maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
+			}
+			return maxDepth;
+		}
+
 		// Returns true if block at (r,c) is a well
 		public boolean isWell(int[][] field, int r, int c) {
 			return (((c == 0) && (field[r][c + 1] != 0))
