@@ -522,6 +522,23 @@ public class PlayerSkeleton {
 			return count;
 		}
 
+		// Heuistic 5
+		private int getAltitudeDifference() {
+			int max = 0;
+			int min = Integer.MAX_VALUE ;
+			for (int i = 0; i < top.length; i++) {
+				if (top[0] < min) {
+					min = top[0];
+				}
+
+				if (top[0] > max) {
+					max = top[0];
+				}
+			}
+
+			return max - min;
+		}
+
 		// Heuristic 9
 		private int getBlocks() {
 			int rows = field.length;
