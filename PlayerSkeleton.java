@@ -399,6 +399,7 @@ public class PlayerSkeleton {
 			return (((c == 0) && (field[r][c + 1] != 0))
 					|| ((c == field[0].length - 1) && (field[r][c - 1] != 0))
 					|| ((field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
+		}
 		/**
 		 * Returns the number of vertically counted holes. Each vertically connected hole is counted as one.
 		 */
