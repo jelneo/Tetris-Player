@@ -141,13 +141,10 @@ public class GeneticAlgorithm {
         System.out.println(string);
         scores.add(currentCandidate, new Candidate(weights, score));
         currentCandidate++;
-        totalScore += score;
         if (scores.size() == population) {
             findFittestCandidate();
             createNewGeneration();
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(0));
-            System.out.println("Generation " + (generation - 1) + "; Average score: " + totalScore / 100);
-            totalScore = 0;
         } else {
 //            System.out.println("Current chromosome: " + Arrays.toString(chromosomes.get(currentCandidate)));
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));
