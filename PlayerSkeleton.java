@@ -322,7 +322,7 @@ public class PlayerSkeleton {
 					+ multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
 					+ multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field);
+					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field)
 		}
 
 		// Checks for how bumpy the top is
@@ -356,6 +356,25 @@ public class PlayerSkeleton {
 				}
 			}
 			return glitchCount;
+		}
+
+		// Returns the sum of all wells
+		public int getSumofAllWells(int[][] field) {
+			int wellCount = 0;
+			for(int c = 0; c < field[0].length; c++) {
+				for(int r = top[c]; r < field.length; r++) {
+					if(field[r][c] == 0) break;
+					else if(isWell(field, r, c)) wellCount++;
+				}
+			}
+			return wellCount;
+		}
+
+		// Returns true if block at (r,c) is a well
+		public boolean isWell(int[][] field, int r, int c) {
+			return (((c == 0) && (field[r][c + 1] != 0))
+					|| ((c == field[0].length - 1) && (field[r][c - 1] != 0))
+					|| ((field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
 		}
 	}
 
