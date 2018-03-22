@@ -371,8 +371,6 @@ public class PlayerSkeleton {
 		 */
 		public int getVerticalHeightHoles(int[][] field, int[] top) {
 			int verticalHoles = 0;
-
-			int[][] temp = new int[ROWS][COLS];
 			int[] curr = new int[top.length];
 
 			for (int c = 0; c < COLS; c++) {
