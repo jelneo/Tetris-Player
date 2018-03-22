@@ -444,6 +444,18 @@ public class PlayerSkeleton {
 					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getHoles(field);
 		}
 
+		// Heuristic 1
+		private int getMaxHeight(int[] top) {
+			int maxHeight = 0;
+			for (int i = 0; i < top.length; i++) {
+				if (maxHeight < top[i]) {
+					maxHeight = top[i];
+				}
+			}
+
+			return maxHeight;
+		}
+
 		// Checks for how bumpy the top is
 		public int getBumpiness(int[] top) {
 			int bumpiness = 0;
@@ -510,6 +522,41 @@ public class PlayerSkeleton {
 			return count;
 		}
 
+		// Heuristic 9
+		private int getBlocks() {
+			int rows = field.length;
+			int cols = field[0].length;
+			int blocks = 0;
+
+			for (int r = 0; r < rows; r++) {
+				for (int c = 0; c < cols; c++) {
+					if (!isEmpty(field[r][c])) {
+						blocks++;
+					}
+				}
+			}
+
+			return blocks;
+		}
+
+		// Heuristic 10
+		private int getWeightedBlocks() {
+			int rows = field.length;
+			int cols = field[0].length;
+			int blocks = 0;
+
+			for (int r = 0; r < rows; r++) {
+				for (int c = 0; c < cols; c++) {
+					if (!isEmpty(field[r][c])) {
+						blocks += r + 1;
+					}
+				}
+			}
+
+			return blocks;
+		}
+
+		// Heuristic 11
 		private int getRowTransitions() {
 			int rows = field.length;
 			int cols = field[0].length;
@@ -534,6 +581,7 @@ public class PlayerSkeleton {
 			return transitions;
 		}
 
+		// Heuristic 12
 		private int getColTransitions(int[][] field) {
 			int rows = field.length;
 			int cols = field[0].length;
@@ -553,18 +601,6 @@ public class PlayerSkeleton {
 
 			return transitions;
 		}
-
-		public int getMaxHeight(int[] top) {
-			int maxHeight = 0;
-			for (int i = 0; i < top.length; i++) {
-				if (maxHeight < top[i]) {
-					maxHeight = top[i];
-				}
-			}
-
-			return maxHeight;
-		}
-
 
 
 		private boolean isEmpty(int grid) {
