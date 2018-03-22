@@ -14,28 +14,28 @@ public class Candidate implements Comparable<Candidate>{
 
     // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
     // initialized to default values
-    private float[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f};
+    private double[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f};
 
-    private float fitnessScore = 0;
+    private double fitnessScore = 0;
 
-    public Candidate(float[] weights, float fitness) {
+    public Candidate(double[] weights, double fitness) {
         for (int i = 0; i < NUM_PARAMETERS; i++) {
             multiplierWeights[i] = weights[i];
         }
         fitnessScore = fitness;
     }
 
-    public float getFitnessScore() {
+    public double getFitnessScore() {
         return fitnessScore;
     }
 
-    public float[] getMultiplierWeights() {
+    public double[] getMultiplierWeights() {
         return multiplierWeights;
     }
 
 
     @Override
     public int compareTo(@NotNull Candidate other) {
-        return Float.compare(fitnessScore, other.fitnessScore);
+        return Double.compare(fitnessScore, other.fitnessScore);
     }
 }
