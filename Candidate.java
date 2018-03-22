@@ -1,11 +1,11 @@
 import com.sun.istack.internal.NotNull;
 
 public class Candidate implements Comparable<Candidate>{
-    private static final int NUM_PARAMETERS = 5;
+    private static final int NUM_PARAMETERS = 13;
 
     // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
     // initialized to default values
-    private double[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f};
+    private double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f};
     private double fitnessScore = 0;
 
     public Candidate(double[] weights, double fitness) {
