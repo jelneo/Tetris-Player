@@ -330,6 +330,7 @@ public class PlayerSkeleton {
 					+ multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
 					+ multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field, top)
 					+ multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles(field, top);
+
 		}
 
 		// Checks for how bumpy the top is
@@ -366,6 +367,38 @@ public class PlayerSkeleton {
 			return glitchCount;
 		}
 
+		// Returns the sum of all wells
+		public int getSumofAllWells(int[][] field) {
+			int wellCount = 0;
+			for(int c = 0; c < field[0].length; c++) {
+				for(int r = top[c]; r < field.length; r++) {
+					if(field[r][c] != 0) break;
+					else if(isWell(field, r, c)) wellCount++;
+				}
+			}
+			return wellCount;
+		}
+
+		// Returns the maximum well depth
+		public int getMaxWellDepth(int[][] field) {
+			int maxDepth = 0;
+			for (int c = 0; c < field[0].length; c++) {
+				int currDepth = 0;
+				for(int r = top[c]; r < field.length; r++) {
+					if(field[r][c] != 0) break;
+					else if (isWell(field, r, c)) currDepth++;
+				}
+				maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
+			}
+			return maxDepth;
+		}
+
+		// Returns true if block at (r,c) is a well
+		public boolean isWell(int[][] field, int r, int c) {
+			return (((c == 0) && (field[r][c + 1] != 0))
+					|| ((c == field[0].length - 1) && (field[r][c - 1] != 0))
+					|| ((field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
+		}
 		/**
 		 * Returns the number of vertically counted holes. Each vertically connected hole is counted as one.
 		 */
