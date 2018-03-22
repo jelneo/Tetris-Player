@@ -171,7 +171,7 @@ public class PlayerSkeleton {
 		// Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
 		int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
 		if (maxHeight > MAX_HEALTHY_HEIGHT) {
-			heightBonus -= (maxHeight * maxHeight);
+			heightBonus -= (maxHeight - MAX_HEALTHY_HEIGHT) * (maxHeight - MAX_HEALTHY_HEIGHT);
 		}
     	int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
 		return score;
