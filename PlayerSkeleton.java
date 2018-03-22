@@ -326,8 +326,8 @@ public class PlayerSkeleton {
 		}
 
 		// Checks for how bumpy the top is
-		public float getBumpiness(int[] top) {
-			float bumpiness = 0;
+		public int getBumpiness(int[] top) {
+			int bumpiness = 0;
 			for (int i = 0; i < top.length - 1; i++) {
 				bumpiness += Math.abs(top[i] - top[i + 1]);
 			}
@@ -336,8 +336,8 @@ public class PlayerSkeleton {
 		}
 
 		// Returns the sum of heights
-		public float getTotalHeight(int[] top) {
-			float totalHeight = 0;
+		public int getTotalHeight(int[] top) {
+			int totalHeight = 0;
 			for (int i = 0; i < top.length; i++) {
 				totalHeight += top[i];
 			}
@@ -360,11 +360,11 @@ public class PlayerSkeleton {
 				}
 			}
 
-			for (int r = 0; r < ROWS; r++) {
-				for(int c = 0; c < COLS; c++) {
+			for (int c = 0; c < COLS; c++) {
+				for (int r = 0; r < top[c]; r++) {
 					if (temp[r][c] == 0) {
 						// penalize for bigger glitches
-						glitchCount = (int) Math.pow(getLocalGlitchSize(temp, r, c), 2);
+						glitchCount = (int) Math.pow(getLocalGlitchSize(temp, r, c), 1.5);
 					}
 				}
 			}
