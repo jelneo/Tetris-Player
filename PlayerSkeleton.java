@@ -479,7 +479,10 @@ public class PlayerSkeleton {
 						grid = true;
 						transitions++;
 					}
+				}
 
+				if (!grid) {
+					transitions++;
 				}
 			}
 
