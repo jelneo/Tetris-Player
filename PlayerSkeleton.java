@@ -372,7 +372,7 @@ public class PlayerSkeleton {
 			int wellCount = 0;
 			for(int c = 0; c < field[0].length; c++) {
 				for(int r = top[c]; r < field.length; r++) {
-					if(field[r][c] == 0) break;
+					if(field[r][c] != 0) break;
 					else if(isWell(field, r, c)) wellCount++;
 				}
 			}
