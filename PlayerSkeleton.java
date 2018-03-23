@@ -168,6 +168,7 @@ public class PlayerSkeleton {
 	}
 
 	protected static void triggerSaveParameters() {
+        populationMultipliers = geneticAlgorithm.getLatestPopulation();
 	    saveParameters();
     }
 
