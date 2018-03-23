@@ -144,6 +144,7 @@ public class GeneticAlgorithm {
             findFittestCandidate();
             createNewGeneration();
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(0));
+            PlayerSkeleton.triggerSaveParameters();
         } else {
 //            System.out.println("Current chromosome: " + Arrays.toString(chromosomes.get(currentCandidate)));
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));

@@ -167,6 +167,10 @@ public class PlayerSkeleton {
 		window.dispose();
 	}
 
+	protected static void triggerSaveParameters() {
+	    saveParameters();
+    }
+
 	protected static void setMultiplierWeights(double[] newWeights) {
 //        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
 		for (int i = 0; i < NUM_PARAMETERS; i++) {
@@ -326,6 +330,8 @@ public class PlayerSkeleton {
 				bufferedWriter.write(line);
 			}
 			bufferedWriter.close();
+
+			System.out.println("PARAMETERS SAFELY SAVED!");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
