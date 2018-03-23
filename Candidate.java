@@ -1,5 +1,3 @@
-import com.sun.istack.internal.NotNull;
-
 public class Candidate implements Comparable<Candidate>{
     private static final int NUM_PARAMETERS = 13;
 
@@ -25,7 +23,7 @@ public class Candidate implements Comparable<Candidate>{
 
 
     @Override
-    public int compareTo(@NotNull Candidate other) {
+    public int compareTo(Candidate other) {
         return Double.compare(fitnessScore, other.fitnessScore);
     }
 }
