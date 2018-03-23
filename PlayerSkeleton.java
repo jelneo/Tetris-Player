@@ -44,8 +44,8 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 1000;
-	private static final int TURNS_LIMIT = 800;
+	private static final int DATA_SIZE = 3000;
+	private static final int TURNS_LIMIT = 1500;
 	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
 
@@ -114,11 +114,12 @@ public class PlayerSkeleton {
 				PlayerSkeleton p = new PlayerSkeleton();
 				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
-					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+//					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
 						score += getScore(s);
-					}
+//					}
 				}
 			}
+            System.out.println("Row Cleared: " + s.getRowsCleared());
 			geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
 			maxScore = Math.max(maxScore, score);
 			minScore = Math.min(minScore, score);
@@ -573,11 +574,9 @@ public class PlayerSkeleton {
 
         // Returns true if block at (r,c) is a well
         public boolean isWell(int[][] field, int r, int c) {
-//            System.out.println("R:" + r + " C:" + c);
-//            return (((c == 0) && (field[r][c + 1] != 0))
-//                    || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
-//                    || ((field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
-            return true;
+            return (((c == 0) && (field[r][c + 1] != 0))
+                    || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
+                    || ((c != 0) && (c != field[0].length - 1) &&(field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
         }
 
         // Heuristic 9

@@ -6,7 +6,7 @@ import java.util.*;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 13;
     private static final double PERCENTAGE_OFFSPRING = 0.3f;
-    private static final double MUTATION_AMOUNT = 0.3f;
+    private static final double MUTATION_AMOUNT = 0.5f;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
