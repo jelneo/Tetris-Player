@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 import java.io.FileWriter;
@@ -5,48 +8,60 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 
+import static java.lang.Integer.parseInt;
+
 public class PlayerSkeleton {
 
+
     /********************************* Multipliers to determine value of simulated move *********************************/
-    private static final int NUM_PARAMETERS = 6;
+    private static final int NUM_PARAMETERS = 13;
     private static final int ROWS_CLEARED_MULT_INDEX = 0;
     private static final int GLITCH_COUNT_MULT_INDEX = 1;
     private static final int BUMPINESS_MULT_INDEX = 2;
     private static final int TOTAL_HEIGHT_MULT_INDEX = 3;
     private static final int MAX_HEIGHT_MULT_INDEX = 4;
     private static final int VERTICALLY_CONNECTED_HOLES_MULT_INDEX = 5;
+    private static final int SUM_OF_ALL_WELLS_INDEX = 6;
+    private static final int MAX_WELL_DEPTH_INDEX = 7;
+    private static final int BLOCKS_INDEX = 8;
+    private static final int WEIGHTED_BLOCKS_INDEX = 9;
+    private static final int ROW_TRANSITIONS_INDEX = 10;
+    private static final int COL_TRANSITIONS_INDEX = 11;
+    private static final int BALANCE_INDEX = 12;
 
     // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
     // initialized to default values
-    private static float[] multiplierWeights = {10f, -0.1f, -01.f, -0.5f, -0.1f, -0.5f};
+    private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f};
+    private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0";
+    private static List<double[]> populationMultipliers;
 
     private static String[] multiplierNames = {
-            "ROWS_CLEARED_MULT",
-            "GLITCH_COUNT_MUL",
-            "BUMPINESS_MUL",
-            "TOTAL_HEIGHT_MUL",
-            "MAX_HEIGHT_MUL",
-            "VERTICALLY_CONNECTED_HOLES"
+            "ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
+            "SUM_OF_WELLS_MUL", "MAX_WELL_DEPTH_MUL", "BLOCKS_MUL", "WEIGHTED_BLOCKS_MUL", "ROW_TRANSITIONS_MUL",
+            "COL_TRANSITIONS_MUL", "BALANCE_MUL"
     };
 
     /********************************* End of multipliers *********************************/
 
     private static boolean visualMode = false;
-    private static final int DATA_SIZE = 30;
+    private static final int DATA_SIZE = 3000;
+    private static final int TURNS_LIMIT = 1500;
+    private static final int SAMPLING_INTERVAL = 100;
+    private static GeneticAlgorithm geneticAlgorithm;
 
     //implement this function to have a working system
     /**
      * Picks the move with the highest value.
      *
-     * @param s - present state
-     * @param legalMoves - List of legal moves
+     * @param s present state
+     * @param legalMoves List of legal moves
      * @return the move that has the maximum value based on
      * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
      */
     public int pickMove(State s, int[][] legalMoves) {
 
         int maxIdx = 0;
-        float max = simulateMove(s, legalMoves[0]);
+        double max = simulateMove(s, legalMoves[0]);
         for (int i = 1; i < legalMoves.length; i++) {
             if (simulateMove(s, legalMoves[i]) > max) {
                 maxIdx = i;
@@ -57,8 +72,8 @@ public class PlayerSkeleton {
         return maxIdx;
     }
 
-    // Simulates a move and returns a float that allows for evaluation. The higher the better.
-    public float simulateMove(State s, int[] move) {
+    // Simulates a move and returns a double that allows for evaluation. The higher the better.
+    public double simulateMove(State s, int[] move) {
         SimulatedState ss = new SimulatedState(s);
         return ss.getMoveValue(move);
     }
@@ -69,6 +84,9 @@ public class PlayerSkeleton {
         printParameters();
 
         executeDataSet();
+
+        multiplierWeights = geneticAlgorithm.getFittestCandidate();
+        populationMultipliers = geneticAlgorithm.getLatestPopulation();
 
         printParameters();
         saveParameters();
@@ -83,23 +101,32 @@ public class PlayerSkeleton {
         int sum = 0;
         int var = 0;
         int counter = DATA_SIZE; // set to 30 for more accurate sample size
+
+        geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
+        multiplierWeights = populationMultipliers.get(0);
         while(counter-- > 0) {
             State s = new State();
+            int score = 0;
 
             if (visualMode) {
                 visualize(s);
             } else {
                 PlayerSkeleton p = new PlayerSkeleton();
-                while (!s.hasLost()) {
+                while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
                     s.makeMove(p.pickMove(s, s.legalMoves()));
+                    if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+                        score += getScore(s);
+                    }
                 }
             }
+            System.out.println("Row Cleared: " + s.getRowsCleared());
+            geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
+            maxScore = Math.max(maxScore, score);
+            minScore = Math.min(minScore, score);
+            sum += score;
+            var += score * score;
 
-            maxScore = Math.max(maxScore, s.getRowsCleared());
-            minScore = Math.min(minScore, s.getRowsCleared());
-            sum += s.getRowsCleared();
-            var += s.getRowsCleared() * s.getRowsCleared();
-            System.out.println("You have completed " + s.getRowsCleared() + " rows.");
+//			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
         }
 
         var -= ((double) sum) * ((double) sum) / DATA_SIZE;
@@ -130,21 +157,87 @@ public class PlayerSkeleton {
             // This creates a delay, making it harder to test multiple tests
 			/*
 			try {
-				Thread.sleep(10);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			*/
+
         }
         window.dispose();
     }
 
+    protected static void triggerSaveParameters() {
+        populationMultipliers = geneticAlgorithm.getLatestPopulation();
+        saveParameters();
+    }
+
+    protected static void setMultiplierWeights(double[] newWeights) {
+//        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            multiplierWeights[i] = newWeights[i];
+        }
+//        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
+    }
+
+    /********************************* Score calculation *********************************************/
+    private static final int MAX_HEALTHY_HEIGHT = 7;
+    private static final int HOLE_MULTIPLIER = -4;
+    private static int getScore(State s) {
+        int maxHeight = getMaxHeight(s);
+        // Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
+        int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
+        if (maxHeight > MAX_HEALTHY_HEIGHT) {
+            heightBonus -= (maxHeight - MAX_HEALTHY_HEIGHT) * (maxHeight - MAX_HEALTHY_HEIGHT);
+        }
+        int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
+        return score;
+    }
+
+    private static int getMaxHeight(State s) {
+        return getMax(s.getTop());
+    }
+
+    private static int getMax(int[] arr) {
+        int max = 0;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] > max) {
+                max = arr[i];
+            }
+        }
+        return max;
+    }
+
+    private static int getHoles(State s) {
+        int count = 0;
+        int[][] field = s.getField();
+        int[] top = s.getTop();
+
+        int cols = field[0].length;
+
+        for(int c = 0; c < cols; c++) {
+            for(int r = top[c]; r >= 0; r--) {
+                if (isEmpty(field[r][c])) {
+                    count++;
+                }
+            }
+
+        }
+
+        return count;
+    }
+
+    private static boolean isEmpty(int grid) {
+        return grid == 0;
+    }
+    /********************************* End of score calculation **************************************/
+
 
     /********************************* Parameter weight optimization *********************************/
-    private static final String PARAM_FILE_NAME = "parameter.txt";
+    private static final String PARAM_FILE_NAME = "parameters.txt";
 
     /**
-     * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameter.txt in same directory as
+     * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
      * PlayerSkeleton file. If file is empty, then use default parameters.
      *
      * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -152,8 +245,9 @@ public class PlayerSkeleton {
     private static void setParameters() {
         // This will reference one line at a time
         String line = null;
+        Integer size;
 
-        // read first line from parameter.txt
+        // read first line from parameters.txt
         try {
             FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
@@ -162,27 +256,57 @@ public class PlayerSkeleton {
 
             line = bufferedReader.readLine();
 
+            if (line == null) {
+                System.out.println(PARAM_FILE_NAME + " is empty, using default values");
+            } else {
+                size = parseInt(line);
+                populationMultipliers = new ArrayList<>();
+                for (int i = 0; i < size; i++) {
+                    line = bufferedReader.readLine();
+                    String[] values;
+                    if (line == null) {
+//						setParameters(DEFAULT_PARAMETERS.split(" "));
+                        values = DEFAULT_PARAMETERS.split(" ");
+                    } else {
+                        values = line.split(" ");
+                    }
+
+                    populationMultipliers.add(stringToDouble(values));
+
+                }
+
+                System.out.println("========================================================");
+                for (int i = 0; i < populationMultipliers.size(); i++) {
+                    System.out.println(Arrays.toString(populationMultipliers.get(i)));
+                }
+            }
+
             bufferedReader.close();
         } catch(Exception e) {
             e.printStackTrace();
         }
 
-        if (line == null) {
-            System.out.println("parameter.txt is empty, using default values");
-        } else {
-            String[] values = line.split(" ");
-            setParameters(values);
-        }
     }
 
     private static void setParameters(String[] values) {
         for (int i = 0; i < NUM_PARAMETERS; i++) {
-            multiplierWeights[i] = Float.parseFloat(values[i]);
+            System.out.println(values[i]);
+            multiplierWeights[i] = Double.parseDouble(values[i]);
+            System.out.println(multiplierWeights[i]);
         }
     }
 
+    private static double[] stringToDouble(String[] values) {
+        double[] result = new double[NUM_PARAMETERS];
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            result[i] = Double.parseDouble(values[i]);
+        }
+
+        return result;
+    }
+
     /**
-     * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameter.txt in same directory as
+     * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
      * PlayerSkeleton file.
      *
      * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -193,14 +317,22 @@ public class PlayerSkeleton {
 
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-            String line = "" + multiplierWeights[0];
-            for (int i = 1; i < NUM_PARAMETERS; i++) {
-                line += " " + multiplierWeights[i];
-            }
-            line += "\n";
-
+            String line = populationMultipliers.size() + "\n";
             bufferedWriter.write(line);
+
+            for(int i = 0; i < populationMultipliers.size(); i++) {
+                multiplierWeights = populationMultipliers.get(i);
+                line = "" + multiplierWeights[0];
+                for (int j = 1; j < NUM_PARAMETERS; j++) {
+                    line += " " + multiplierWeights[j];
+                }
+                line += "\n";
+
+                bufferedWriter.write(line);
+            }
             bufferedWriter.close();
+
+            System.out.println("PARAMETERS SAFELY SAVED!");
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -252,11 +384,11 @@ public class PlayerSkeleton {
         }
 
         // Returns the value of making a move
-        public float getMoveValue(int move[]) {
+        public double getMoveValue(int move[]) {
             return getMoveValue(move[ORIENT], move[SLOT]);
         }
 
-        public float getMoveValue(int orient, int slot) {
+        public double getMoveValue(int orient, int slot) {
             //height if the first column makes contact
             int height = top[slot]-getpBottom()[nextPiece][orient][0];
             //for each column beyond the first in the piece
@@ -328,21 +460,29 @@ public class PlayerSkeleton {
                     + multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
                     + multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
                     + multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field, top)
-                    + multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles(field, top);
-
+                    + multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles(field, top)
+                    + multiplierWeights[SUM_OF_ALL_WELLS_INDEX] * getSumofAllWells(field)
+                    + multiplierWeights[MAX_WELL_DEPTH_INDEX] * getMaxWellDepth(field)
+                    + multiplierWeights[BLOCKS_INDEX] * getBlocks()
+                    + multiplierWeights[WEIGHTED_BLOCKS_INDEX] * getWeightedBlocks()
+                    + multiplierWeights[ROW_TRANSITIONS_INDEX] * getRowTransitions()
+                    + multiplierWeights[COL_TRANSITIONS_INDEX] * getColTransitions()
+                    + multiplierWeights[BALANCE_INDEX] * getBalance(field);
         }
 
         // Checks for how bumpy the top is
+        // Heuristic 1
         public int getBumpiness(int[] top) {
             int bumpiness = 0;
             for (int i = 0; i < top.length - 1; i++) {
-                bumpiness += Math.abs(top[i] - top[i + 1]);
+                bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
             }
 
             return bumpiness;
         }
 
         // Returns the sum of heights
+        // Heuristic 2
         public int getTotalHeight(int[] top) {
             int totalHeight = 0;
             for (int i = 0; i < top.length; i++) {
@@ -352,6 +492,7 @@ public class PlayerSkeleton {
             return totalHeight;
         }
 
+        // Heuristic 5
         public int getGlitchCount(int[][] field, int[] top) {
             int glitchCount = 0;
 
@@ -366,41 +507,10 @@ public class PlayerSkeleton {
             return glitchCount;
         }
 
-        // Returns the sum of all wells
-        public int getSumofAllWells(int[][] field) {
-            int wellCount = 0;
-            for(int c = 0; c < field[0].length; c++) {
-                for(int r = top[c]; r < field.length; r++) {
-                    if(field[r][c] != 0) break;
-                    else if(isWell(field, r, c)) wellCount++;
-                }
-            }
-            return wellCount;
-        }
-
-        // Returns the maximum well depth
-        public int getMaxWellDepth(int[][] field) {
-            int maxDepth = 0;
-            for (int c = 0; c < field[0].length; c++) {
-                int currDepth = 0;
-                for(int r = top[c]; r < field.length; r++) {
-                    if(field[r][c] != 0) break;
-                    else if (isWell(field, r, c)) currDepth++;
-                }
-                maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
-            }
-            return maxDepth;
-        }
-
-        // Returns true if block at (r,c) is a well
-        public boolean isWell(int[][] field, int r, int c) {
-            return (((c == 0) && (field[r][c + 1] != 0))
-                    || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
-                    || ((c != 0) && (c != field[0].length - 1) &&(field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
-        }
         /**
          * Returns the number of vertically counted holes. Each vertically connected hole is counted as one.
          */
+        // Heuristic 6
         public int getVerticalHeightHoles(int[][] field, int[] top) {
             int verticalHoles = 0;
             int[] curr = new int[top.length];
@@ -420,6 +530,173 @@ public class PlayerSkeleton {
 
             return verticalHoles;
         }
+
+        private int getHoles(int[][] field) {
+            int count = 0;
+
+            int rows = field.length;
+            int cols = field[0].length;
+
+            for(int c = 0; c < cols; c++) {
+                boolean capped = false;
+                for(int r = rows - 1; r >= 0; r--) {
+                    if(!isEmpty(field[r][c])) {
+                        capped = true;
+                    } else if (isEmpty(field[r][c]) && capped)
+                        count++;
+                }
+
+            }
+
+            return count;
+        }
+
+        // Returns the sum of all wells
+        // Heuristic 7
+        public int getSumofAllWells(int[][] field) {
+            int wellCount = 0;
+            for(int c = 0; c < field[0].length; c++) {
+                for(int r = top[c]; r < field.length; r++) {
+                    if(field[r][c] != 0) break;
+                    else if(isWell(field, r, c)) wellCount++;
+                }
+            }
+            return wellCount;
+        }
+
+        // Returns the maximum well depth
+        // Heuristic 8
+        public int getMaxWellDepth(int[][] field) {
+            int maxDepth = 0;
+            for (int c = 0; c < field[0].length; c++) {
+                int currDepth = 0;
+                for(int r = top[c]; r < field.length; r++) {
+                    if(field[r][c] != 0) break;
+                    else if (isWell(field, r, c)) currDepth++;
+                }
+                maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
+            }
+            return maxDepth;
+        }
+
+        // Returns true if block at (r,c) is a well
+        public boolean isWell(int[][] field, int r, int c) {
+            return (((c == 0) && (field[r][c + 1] != 0))
+                    || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
+                    || ((c != 0) && (c != field[0].length - 1) &&(field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
+        }
+
+        // Heuristic 9
+        private int getBlocks() {
+            int rows = field.length;
+            int cols = field[0].length;
+            int blocks = 0;
+
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    if (!isEmpty(field[r][c])) {
+                        blocks++;
+                    }
+                }
+            }
+
+            return blocks;
+        }
+
+        // Heuristic 10
+        private int getWeightedBlocks() {
+            int rows = field.length;
+            int cols = field[0].length;
+            int blocks = 0;
+
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    if (!isEmpty(field[r][c])) {
+                        blocks += r + 1;
+                    }
+                }
+            }
+
+            return blocks;
+        }
+
+        // Heuristic 11
+        private int getRowTransitions() {
+            int rows = field.length;
+            int cols = field[0].length;
+            int transitions = 0;
+            for (int r = 0; r < rows; r++) {
+                boolean grid = true;
+                for (int c = 0; c < cols; c++) {
+                    if (isEmpty(field[r][c]) && grid) {
+                        grid = false;
+                        transitions++;
+                    } else if (!isEmpty(field[r][c]) && !grid) {
+                        grid = true;
+                        transitions++;
+                    }
+                }
+
+                if (!grid) {
+                    transitions++;
+                }
+            }
+
+            return transitions;
+        }
+
+        // Heuristic 12
+        private int getColTransitions() {
+            int rows = field.length;
+            int cols = field[0].length;
+            int transitions = 0;
+            for (int c = 0; c < cols; c++) {
+                boolean grid = true;
+                for (int r = 0; r < rows; r++) {
+                    if (isEmpty(field[r][c]) && grid) {
+                        grid = false;
+                        transitions++;
+                    } else if (!isEmpty(field[r][c]) && !grid) {
+                        grid = true;
+                        transitions++;
+                    }
+                }
+            }
+
+            return transitions;
+        }
+
+        private int getGridsInCol(int[][] field, int col) {
+            int count = 0;
+
+            int rows = field.length;
+
+            for(int r = 0; r < rows; r++) {
+                if (!isEmpty(field[r][col])) {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // Heuristic 13
+        private int getBalance(int[][] field) {
+            int cols = field[0].length;
+
+            int balanceness = 0;
+
+            for(int c = 0; c < cols - 1; c++) {
+                balanceness += Math.abs(getGridsInCol(field, c) - getGridsInCol(field, c + 1));
+            }
+
+            return balanceness;
+        }
+
+        private boolean isEmpty(int grid) {
+            return grid == 0;
+        }
+
     }
 
     /********************************* End of nested class for state simulation *********************************/
