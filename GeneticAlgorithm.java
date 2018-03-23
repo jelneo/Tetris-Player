@@ -4,9 +4,9 @@ import java.util.*;
  * A genetic algorithm that is used to evolve the Tetris AI and find the best weight multiplier for each feature
  */
 public class GeneticAlgorithm {
-    private static final int NUM_CHROMOSOMES = 5;
+    private static final int NUM_CHROMOSOMES = 13;
     private static final double PERCENTAGE_OFFSPRING = 0.3f;
-    private static final double MUTATION_AMOUNT = 0.2f;
+    private static final double MUTATION_AMOUNT = 0.5f;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
@@ -20,7 +20,6 @@ public class GeneticAlgorithm {
     private static double fittestScore = Double.NEGATIVE_INFINITY;
     private static int fittestGeneration = 0;
     private static int fittestIndex = 0;
-    private static double totalScore = 0;
 
 
     public GeneticAlgorithm(List<double[]> weights) {
@@ -145,6 +144,7 @@ public class GeneticAlgorithm {
             findFittestCandidate();
             createNewGeneration();
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(0));
+            PlayerSkeleton.triggerSaveParameters();
         } else {
 //            System.out.println("Current chromosome: " + Arrays.toString(chromosomes.get(currentCandidate)));
             PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));
