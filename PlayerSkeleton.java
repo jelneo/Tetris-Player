@@ -114,9 +114,9 @@ public class PlayerSkeleton {
 				PlayerSkeleton p = new PlayerSkeleton();
 				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
 					s.makeMove(p.pickMove(s, s.legalMoves()));
-//					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
 						score += getScore(s);
-//					}
+					}
 				}
 			}
             System.out.println("Row Cleared: " + s.getRowsCleared());
