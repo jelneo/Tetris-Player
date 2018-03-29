@@ -14,7 +14,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Multipliers to determine value of simulated move *********************************/
-    private static final int NUM_PARAMETERS = 13;
+    private static final int NUM_PARAMETERS = 14;
     private static final int ROWS_CLEARED_MULT_INDEX = 0;
     private static final int GLITCH_COUNT_MULT_INDEX = 1;
     private static final int BUMPINESS_MULT_INDEX = 2;
@@ -28,24 +28,25 @@ public class PlayerSkeleton {
     private static final int ROW_TRANSITIONS_INDEX = 10;
     private static final int COL_TRANSITIONS_INDEX = 11;
     private static final int BALANCE_INDEX = 12;
+    private static final int IDEAL_INDEX = 13;
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f};
-	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0";
+	private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f, 0.2f};
+	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0 0";
 	private static List<double[]> populationMultipliers;
 
 	private static String[] multiplierNames = {
 		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
             "SUM_OF_WELLS_MUL", "MAX_WELL_DEPTH_MUL", "BLOCKS_MUL", "WEIGHTED_BLOCKS_MUL", "ROW_TRANSITIONS_MUL",
-            "COL_TRANSITIONS_MUL", "BALANCE_MUL"
+            "COL_TRANSITIONS_MUL", "BALANCE_MUL", "IDEAL_MUL"
 	};
 
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 3000;
-	private static final int TURNS_LIMIT = 1500;
+	private static final int DATA_SIZE = 1000;
+	private static final int TURNS_LIMIT = Integer.MAX_VALUE;
 	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
 
@@ -237,7 +238,7 @@ public class PlayerSkeleton {
 	private static final String PARAM_FILE_NAME = "parameters.txt";
 
 	/**
-	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
+         * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
 	 * PlayerSkeleton file. If file is empty, then use default parameters.
 	 *
 	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
@@ -467,7 +468,8 @@ public class PlayerSkeleton {
                     + multiplierWeights[WEIGHTED_BLOCKS_INDEX] * getWeightedBlocks()
                     + multiplierWeights[ROW_TRANSITIONS_INDEX] * getRowTransitions()
                     + multiplierWeights[COL_TRANSITIONS_INDEX] * getColTransitions()
-                    + multiplierWeights[BALANCE_INDEX] * getBalance(field);
+                    + multiplierWeights[BALANCE_INDEX] * getBalance(field)
+                    + multiplierWeights[IDEAL_INDEX] * getIdealPositions(top);
         }
 
         // Checks for how bumpy the top is
@@ -691,6 +693,40 @@ public class PlayerSkeleton {
             }
 
             return balanceness;
+        }
+
+        // Heuristic 14
+        private int getIdealPositions(int[] top) {
+            int[][] idealPositions = {{0, 0}, {0, -1}, {0, 1}, {0, 2}, {0, -2}, {0, 0, 0}, {0, 0, 1}, {0, -1, -1},
+                    {0, 1, 1}, {0, 0, -1}, {0, -1, 0}, {0, 0, 0, 0}};
+            int positions = 0;
+
+            for (int i = 0; i < top.length; i++) {
+                for (int j = 0; j < idealPositions.length; j++) {
+                    if (checkIdealPosition(idealPositions[j], i, top)) {
+                        positions++;
+                    }
+                }
+            }
+
+            return positions;
+
+        }
+
+        private boolean checkIdealPosition(int[] idealPosition, int pos, int[] top) {
+            if (pos + idealPosition.length > top.length) {
+                return false;
+            } else {
+
+                int first = top[pos];
+                for (int i = 1; i < idealPosition.length; i++) {
+                    if (first + idealPosition[i] != top[pos + i]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
         }
 
         private boolean isEmpty(int grid) {

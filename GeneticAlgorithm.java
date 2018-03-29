@@ -4,14 +4,14 @@ import java.util.*;
  * A genetic algorithm that is used to evolve the Tetris AI and find the best weight multiplier for each feature
  */
 public class GeneticAlgorithm {
-    private static final int NUM_CHROMOSOMES = 13;
+    private static final int NUM_CHROMOSOMES = 14;
     private static final double PERCENTAGE_OFFSPRING = 0.3f;
-    private static final double MUTATION_AMOUNT = 0.5f;
+    private static final double MUTATION_AMOUNT = 0.2f;//0.01f;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
     private int generation = 1;
-    private final double MUTATION_RATE = 0.2f;
+    private final double MUTATION_RATE = 1.0f;//0.2f;
     private List<double[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
     private static ArrayList<Candidate> scores = new ArrayList<>();
@@ -199,7 +199,6 @@ public class GeneticAlgorithm {
             if (mutate) {
                 // Change this value anywhere from -5 to 5
                 change = rnd.nextDouble() * mutationAmount * 2 - mutationAmount;
-
             }
 
             mutant[k] = candidate[k] + change;
