@@ -1,3 +1,4 @@
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -282,7 +283,14 @@ public class PlayerSkeleton {
 			}
 
 			bufferedReader.close();
-		} catch(Exception e) {
+		} catch (FileNotFoundException fnfe) {
+            populationMultipliers = new ArrayList<>();
+            for (int i = 0; i < DEFAULT_GENERATION_SIZE; i++) {
+                String[] values;
+                values = DEFAULT_PARAMETERS.split(" ");
+                populationMultipliers.add(stringToDouble(values));
+            }
+        } catch(Exception e) {
 			e.printStackTrace();
 		}
 
