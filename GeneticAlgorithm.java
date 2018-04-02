@@ -6,12 +6,12 @@ import java.util.*;
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 14;
     private static final double PERCENTAGE_OFFSPRING = 0.3f;
-    private static final double MUTATION_AMOUNT = 0.2f;//0.01f;
+    private static final double MUTATION_AMOUNT = 0.2f;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
-    private int population = 100;
+    private int population = 10;
     private int generation = 1;
-    private final double MUTATION_RATE = 1.0f;//0.2f;
+    private final double MUTATION_RATE = 0.4f;
     private List<double[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
     private static ArrayList<Candidate> scores = new ArrayList<>();
@@ -61,9 +61,11 @@ public class GeneticAlgorithm {
 
         List<double[]> offspring_population = new ArrayList<>(population/2);
         // Pair up two winners at a time
-        for (int i = 0; i < population - 1; i++) {
+        int offspringNumber = (int) (((1 - PERCENTAGE_OFFSPRING) * population + 1) / 2) + 1;
+        for (int i = 0; i < offspringNumber; i++) {
             Candidate winner1 = scores.get(population - i - 1);
             Candidate winner2 = scores.get(population - i - 2);
+
 
 //            System.out.println(Arrays.toString(winner1.getMultiplierWeights()));
 //            System.out.println(Arrays.toString(winner2.getMultiplierWeights()));

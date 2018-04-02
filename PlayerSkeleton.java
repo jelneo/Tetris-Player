@@ -45,8 +45,8 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 1000;
-	private static final int TURNS_LIMIT = Integer.MAX_VALUE;
+	private static final int DATA_SIZE = 30;
+	private static final int TURNS_LIMIT = 5000;//Integer.MAX_VALUE;
 	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
 
@@ -235,7 +235,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameters.txt";
+	private static final String PARAM_FILE_NAME = "twelvemillion.txt";
 
 	/**
          * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as

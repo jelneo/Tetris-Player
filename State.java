@@ -160,8 +160,16 @@ public class State {
 	/********************************* Simulation methods *********************************/
 
 	// Random integer, returns 0-6
+//	public boolean left = true;
 	private int randomPiece() {
 		return (int)(Math.random() * N_PIECES);
+//		if (left) {
+//			left = false;
+//			return 5;
+//		} else {
+//			left = true;
+//			return 6;
+//		}
 	}
 	
 	// Gives legal moves for
