@@ -265,7 +265,7 @@ public class PlayerSkeleton {
 	 */
 	private static void setParameters() {
 		// This will reference one line at a time
-		String line = null;
+		String line;
 		Integer size;
 
 		// read first line from parameters.txt
@@ -478,19 +478,13 @@ public class PlayerSkeleton {
             }
             /********************************* End of simulation *********************************/
 
-            int maxHeight = 0;
 
-            for (int i = 0; i < top.length; i++) {
-                if (top[i] > maxHeight) {
-                    maxHeight = top[i];
-                }
-            }
 
             return multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
                     + multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount()
                     + multiplierWeights[BUMPINESS_MULT_INDEX] * getBumpiness()
                     + multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight()
-                    + multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
+                    + multiplierWeights[MAX_HEIGHT_MULT_INDEX] * getMaxHeight()
                     + multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles()
                     + multiplierWeights[SUM_OF_ALL_WELLS_INDEX] * getSumofAllWells()
                     + multiplierWeights[MAX_WELL_DEPTH_INDEX] * getMaxWellDepth()
@@ -500,14 +494,13 @@ public class PlayerSkeleton {
                     + multiplierWeights[COL_TRANSITIONS_INDEX] * getColTransitions()
                     + multiplierWeights[BALANCE_INDEX] * getImbalance()
                     + multiplierWeights[IDEAL_INDEX] * getIdealPositions();
-
         }
 
         /**
          * Returns the number of glitches (covered holes)
          */
         // Heuristic 2
-        public int getGlitchCount() {
+        private int getGlitchCount() {
             int glitchCount = 0;
 
             for (int c = 0; c < field[0].length; c++) {
@@ -526,7 +519,7 @@ public class PlayerSkeleton {
          * of every pair of adjacent columns.
          */
         // Heuristic 3
-        public int getBumpiness() {
+        private int getBumpiness() {
             int bumpiness = 0;
             for (int i = 0; i < top.length - 1; i++) {
                 bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
@@ -539,7 +532,7 @@ public class PlayerSkeleton {
          * Returns the aggregate height
          */
         // Heuristic 4
-        public int getTotalHeight() {
+        private int getTotalHeight() {
             int totalHeight = 0;
             for (int i = 0; i < top.length; i++) {
                 totalHeight += top[i];
@@ -549,10 +542,26 @@ public class PlayerSkeleton {
         }
 
         /**
+         * Returns maximum height of the board
+         */
+        // Heuristic 5
+        private int getMaxHeight() {
+            int maxHeight = 0;
+
+            for (int i = 0; i < top.length; i++) {
+                if (top[i] > maxHeight) {
+                    maxHeight = top[i];
+                }
+            }
+
+            return maxHeight;
+        }
+
+        /**
          * Returns the number of vertically counted holes. Each vertically connected hole is counted as one.
          */
         // Heuristic 6
-        public int getVerticalHeightHoles() {
+        private int getVerticalHeightHoles() {
             int verticalHoles = 0;
             int[] curr = new int[top.length];
 
@@ -576,7 +585,7 @@ public class PlayerSkeleton {
          * Returns the sum of all cells that can be considered wells
          */
         // Heuristic 7
-        public int getSumofAllWells() {
+        private int getSumofAllWells() {
             int wellCount = 0;
             for(int c = 0; c < field[0].length; c++) {
                 for(int r = top[c]; r < field.length; r++) {
@@ -591,7 +600,7 @@ public class PlayerSkeleton {
          * Returns the depth of the deepest well
          */
         // Heuristic 8
-        public int getMaxWellDepth() {
+        private int getMaxWellDepth() {
             int maxDepth = 0;
             for (int c = 0; c < field[0].length; c++) {
                 int currDepth = 0;
@@ -607,7 +616,7 @@ public class PlayerSkeleton {
         /**
          * Returns true if block at (r,c) is a well
          */
-        public boolean isWell(int r, int c) {
+        private boolean isWell(int r, int c) {
             return (((c == 0) && (field[r][c + 1] != 0))
                     || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
                     || ((c != 0) && (c != field[0].length - 1) &&(field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
@@ -743,14 +752,14 @@ public class PlayerSkeleton {
 
         // Heuristic 14
         private int getIdealPositions() {
-            int[][] idealPositions = {{0, 0}, {0, -1}, {0, 1}, {0, 2}, {0, -2}, {0, 0, 0}, {0, 0, 1}, {0, -1, -1},
-                    {0, 1, 1}, {0, 0, -1}, {0, -1, 0}, {0, 0, 0, 0}};
+            int[][] idealPositions = {{3, 0}, {2, -1}, {2, 1}, {1, 2}, {1, -2}, {3, 0, 0}, {1, 0, 1}, {1, -1, -1},
+                    {1, 1, 1}, {1, 0, -1}, {1, -1, 0}, {1, 0, 0, 0}};
             int positions = 0;
 
             for (int i = 0; i < top.length; i++) {
                 for (int j = 0; j < idealPositions.length; j++) {
                     if (checkIdealPosition(idealPositions[j], i, top)) {
-                        positions++;
+                        positions += idealPositions[j][0];
                     }
                 }
             }
@@ -763,7 +772,6 @@ public class PlayerSkeleton {
             if (pos + idealPosition.length > top.length) {
                 return false;
             } else {
-
                 int first = top[pos];
                 for (int i = 1; i < idealPosition.length; i++) {
                     if (first + idealPosition[i] != top[pos + i]) {

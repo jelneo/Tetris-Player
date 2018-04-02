@@ -66,17 +66,11 @@ public class GeneticAlgorithm {
             Candidate winner1 = scores.get(population - i - 1);
             Candidate winner2 = scores.get(population - i - 2);
 
-
-//            System.out.println(Arrays.toString(winner1.getMultiplierWeights()));
-//            System.out.println(Arrays.toString(winner2.getMultiplierWeights()));
-
-            double[] firstChild = mutateByCrossoverCandidates(winner1, winner2);
-//            System.out.println("first child: " + Arrays.toString(firstChild));
-//            offspring_population.add(firstChild);
+            double[] offspring = mutateByCrossoverCandidates(winner1, winner2);
 
             for (int j = 0; j < 2; j++) {
                 offspring_population.add(
-                        mutateCandidateRandomly(firstChild,
+                        mutateCandidateRandomly(offspring,
                                 MUTATION_RATE,
                                 MUTATION_AMOUNT));
             }
@@ -189,7 +183,7 @@ public class GeneticAlgorithm {
      * @param candidate candidate to be mutated
      * @param mutationRate mutation rate
      * @param mutationAmount a double number that is used to mutate the chromosome
-     * @return
+     * @return an array containing the mutated weights
      */
     private double[] mutateCandidateRandomly(double[] candidate, double mutationRate, double mutationAmount) {
         double[] mutant = new double[NUM_CHROMOSOMES];
@@ -199,7 +193,7 @@ public class GeneticAlgorithm {
             // Mutation
             boolean mutate = rnd.nextDouble() < mutationRate;
             if (mutate) {
-                
+
                 change = mutationAmount * (rnd.nextDouble() * 2 - 1);
             }
 
@@ -232,7 +226,7 @@ public class GeneticAlgorithm {
             normal += weight * weight;
         }
 
-        normal = (double) Math.sqrt((double) normal);
+        normal = Math.sqrt(normal);
 
         if (normal == 0) {
             return candidate;
