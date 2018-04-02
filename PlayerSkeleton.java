@@ -14,7 +14,7 @@ import static java.lang.Integer.parseInt;
 public class PlayerSkeleton {
 
 
-	/********************************* Multipliers to determine value of simulated move *********************************/
+    /********************************* Multipliers to determine value of simulated move *********************************/
     private static final int NUM_PARAMETERS = 13;
     private static final int ROWS_CLEARED_MULT_INDEX = 0;
     private static final int GLITCH_COUNT_MULT_INDEX = 1;
@@ -29,135 +29,136 @@ public class PlayerSkeleton {
     private static final int ROW_TRANSITIONS_INDEX = 10;
     private static final int COL_TRANSITIONS_INDEX = 11;
     private static final int BALANCE_INDEX = 12;
+    private static final int DEFAULT_GENERATION_SIZE = 100;
 
-	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
-	// initialized to default values
-	private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f};
-	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0";
-	private static List<double[]> populationMultipliers;
+    // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
+    // initialized to default values
+    private static double[] multiplierWeights = {0.5, -0.1, -01., -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
+    private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
+    private static List<double[]> populationMultipliers;
 
-	private static String[] multiplierNames = {
-		"ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
+    private static String[] multiplierNames = {
+            "ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
             "SUM_OF_WELLS_MUL", "MAX_WELL_DEPTH_MUL", "BLOCKS_MUL", "WEIGHTED_BLOCKS_MUL", "ROW_TRANSITIONS_MUL",
             "COL_TRANSITIONS_MUL", "BALANCE_MUL"
-	};
+    };
 
-	/********************************* End of multipliers *********************************/
+    /********************************* End of multipliers *********************************/
 
-	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 3000;
-	private static final int TURNS_LIMIT = 1500;
-	private static final int SAMPLING_INTERVAL = 50;
-	private static GeneticAlgorithm geneticAlgorithm;
+    private static boolean visualMode = false;
+    private static final int DATA_SIZE = 3000;
+    private static final int TURNS_LIMIT = 1500;
+    private static final int SAMPLING_INTERVAL = 50;
+    private static GeneticAlgorithm geneticAlgorithm;
 
-	//implement this function to have a working system
-	/**
-	 * Picks the move with the highest value.
-	 *
-	 * @param s present state
-	 * @param legalMoves List of legal moves
-	 * @return the move that has the maximum value based on
-	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
-	 */
-	public int pickMove(State s, int[][] legalMoves) {
+    //implement this function to have a working system
+    /**
+     * Picks the move with the highest value.
+     *
+     * @param s present state
+     * @param legalMoves List of legal moves
+     * @return the move that has the maximum value based on
+     * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
+     */
+    public int pickMove(State s, int[][] legalMoves) {
 
-		int maxIdx = 0;
-		double max = simulateMove(s, legalMoves[0]);
-		for (int i = 1; i < legalMoves.length; i++) {
-			if (simulateMove(s, legalMoves[i]) > max) {
-				maxIdx = i;
-				max = simulateMove(s, legalMoves[i]);
-			}
-		}
+        int maxIdx = 0;
+        double max = simulateMove(s, legalMoves[0]);
+        for (int i = 1; i < legalMoves.length; i++) {
+            if (simulateMove(s, legalMoves[i]) > max) {
+                maxIdx = i;
+                max = simulateMove(s, legalMoves[i]);
+            }
+        }
 
-		return maxIdx;
-	}
+        return maxIdx;
+    }
 
-	/**
-	 * Simulates a move and returns a double that allows for evaluation. The higher the better.
-	 */
-     public double simulateMove(State s, int[] move) {
-		SimulatedState ss = new SimulatedState(s);
-		return ss.getMoveValue(move);
-	}
+    /**
+     * Simulates a move and returns a double that allows for evaluation. The higher the better.
+     */
+    public double simulateMove(State s, int[] move) {
+        SimulatedState ss = new SimulatedState(s);
+        return ss.getMoveValue(move);
+    }
 
-	public static void main(String[] args) {
-		setVisualMode();
-		setParameters();
-		printParameters();
-		
-		executeDataSet();
+    public static void main(String[] args) {
+        setVisualMode();
+        setParameters();
+        printParameters();
 
-		multiplierWeights = geneticAlgorithm.getFittestCandidate();
-		populationMultipliers = geneticAlgorithm.getLatestPopulation();
+        executeDataSet();
 
-		printParameters();
-		saveParameters();
-	}
+        multiplierWeights = geneticAlgorithm.getFittestCandidate();
+        populationMultipliers = geneticAlgorithm.getLatestPopulation();
 
-	/**
-	 * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
-	 */
-	private static void executeDataSet() {
-		int maxScore = Integer.MIN_VALUE;
-		int minScore = Integer.MAX_VALUE;
-		int sum = 0;
-		int var = 0;
-		int counter = DATA_SIZE; // set to 30 for more accurate sample size
+        printParameters();
+        saveParameters();
+    }
 
-		geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
-		multiplierWeights = populationMultipliers.get(0);
-		while(counter-- > 0) {
-			State s = new State();
-			int score = 0;
+    /**
+     * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
+     */
+    private static void executeDataSet() {
+        int maxScore = Integer.MIN_VALUE;
+        int minScore = Integer.MAX_VALUE;
+        int sum = 0;
+        int var = 0;
+        int counter = DATA_SIZE; // set to 30 for more accurate sample size
 
-			if (visualMode) {
-				visualize(s);
-			} else {
-				PlayerSkeleton p = new PlayerSkeleton();
-				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
-					s.makeMove(p.pickMove(s, s.legalMoves()));
-					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-						score += getScore(s);
-					}
-				}
-			}
+        geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
+        multiplierWeights = populationMultipliers.get(0);
+        while(counter-- > 0) {
+            State s = new State();
+            int score = 0;
+
+            if (visualMode) {
+                visualize(s);
+            } else {
+                PlayerSkeleton p = new PlayerSkeleton();
+                while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
+                    s.makeMove(p.pickMove(s, s.legalMoves()));
+                    if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+                        score += getScore(s);
+                    }
+                }
+            }
             System.out.println("Row Cleared: " + s.getRowsCleared());
-			geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
-			maxScore = Math.max(maxScore, score);
-			minScore = Math.min(minScore, score);
-			sum += score;
-			var += score * score;
+            geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
+            maxScore = Math.max(maxScore, score);
+            minScore = Math.min(minScore, score);
+            sum += score;
+            var += score * score;
 
 //			System.out.println("You have completed " + s.getRowsCleared() + " rows.");
-		}
+        }
 
-		var -= ((double) sum) * ((double) sum) / DATA_SIZE;
-		var /= DATA_SIZE - 1;
+        var -= ((double) sum) * ((double) sum) / DATA_SIZE;
+        var /= DATA_SIZE - 1;
 
-		System.out.println(" Ave: " + (sum / DATA_SIZE) + " Min: " + minScore + " Max: " + maxScore + " Var: " + var);
-	}
+        System.out.println(" Ave: " + (sum / DATA_SIZE) + " Min: " + minScore + " Max: " + maxScore + " Var: " + var);
+    }
 
-	private static void setVisualMode() {
-		Scanner sc = new Scanner(System.in);
-		System.out.println("Visual Mode? 1 for yes, 0 for no");
-		visualMode = sc.nextInt() == 1;
-		sc.close();
-	}
+    private static void setVisualMode() {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Visual Mode? 1 for yes, 0 for no");
+        visualMode = sc.nextInt() == 1;
+        sc.close();
+    }
 
-	private static void visualize(State s) {
-		TFrame window = new TFrame(s);
-		PlayerSkeleton p = new PlayerSkeleton();
+    private static void visualize(State s) {
+        TFrame window = new TFrame(s);
+        PlayerSkeleton p = new PlayerSkeleton();
 
-		while (!s.hasLost()) {
-			s.makeMove(p.pickMove(s, s.legalMoves()));
+        while (!s.hasLost()) {
+            s.makeMove(p.pickMove(s, s.legalMoves()));
 
-			if (visualMode) {
-				s.draw();
-				s.drawNext(0, 0);
-			}
+            if (visualMode) {
+                s.draw();
+                s.drawNext(0, 0);
+            }
 
-			// This creates a delay, making it harder to test multiple tests
+            // This creates a delay, making it harder to test multiple tests
 			/*
 			try {
 				Thread.sleep(100);
@@ -166,19 +167,19 @@ public class PlayerSkeleton {
 			}
 			*/
 
-		}
-		window.dispose();
-	}
-
-	protected static void triggerSaveParameters() {
-        populationMultipliers = geneticAlgorithm.getLatestPopulation();
-	    saveParameters();
+        }
+        window.dispose();
     }
 
-	protected static void setMultiplierWeights(double[] newWeights) {
+    protected static void triggerSaveParameters() {
+        populationMultipliers = geneticAlgorithm.getLatestPopulation();
+        saveParameters();
+    }
+
+    protected static void setMultiplierWeights(double[] newWeights) {
 //        System.out.println("to be replaced..." + multiplierWeights[0] + " " + multiplierWeights[1] +" "+ multiplierWeights[2] +" "+ multiplierWeights[3] + " " + multiplierWeights[4]);
-		for (int i = 0; i < NUM_PARAMETERS; i++) {
-		    multiplierWeights[i] = newWeights[i];
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            multiplierWeights[i] = newWeights[i];
         }
 //        System.out.println("replaced..." + newWeights[0] + " " + newWeights[1] +" "+ newWeights[2] +" "+ newWeights[3] + " " + newWeights[4]);
     }
@@ -193,192 +194,190 @@ public class PlayerSkeleton {
      * @return health score
      */
     private static int getScore(State s) {
-		int maxHeight = getMaxHeight(s);
-		// Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
-		int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
-		if (maxHeight > MAX_HEALTHY_HEIGHT) {
-			heightBonus -= (maxHeight - MAX_HEALTHY_HEIGHT) * (maxHeight - MAX_HEALTHY_HEIGHT);
-		}
-    	int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
-		return score;
-	}
+        int maxHeight = getMaxHeight(s);
+        // Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
+        int heightBonus = (s.getField().length - MAX_HEALTHY_HEIGHT) * (s.getField().length - MAX_HEALTHY_HEIGHT);
+        if (maxHeight > MAX_HEALTHY_HEIGHT) {
+            heightBonus -= (maxHeight - MAX_HEALTHY_HEIGHT) * (maxHeight - MAX_HEALTHY_HEIGHT);
+        }
+        int score = heightBonus + HOLE_MULTIPLIER * getHoles(s);
+        return score;
+    }
 
     /**
      * Returns the max height of the occupied cells in the state
      */
-	private static int getMaxHeight(State s) {
-    	return getMax(s.getTop());
-	}
+    private static int getMaxHeight(State s) {
+        return getMax(s.getTop());
+    }
 
     /**
      * Returns the maximum element in an integer array
      */
-	private static int getMax(int[] arr) {
-    	int max = 0;
-		for (int i = 0; i < arr.length; i++) {
-			if (arr[i] > max) {
-				max = arr[i];
-			}
-		}
-		return max;
-	}
+    private static int getMax(int[] arr) {
+        int max = 0;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] > max) {
+                max = arr[i];
+            }
+        }
+        return max;
+    }
 
     /**
      * Returns the number of holes/glitches in the state
      */
-	private static int getHoles(State s) {
-		int count = 0;
-		int[][] field = s.getField();
-		int[] top = s.getTop();
+    private static int getHoles(State s) {
+        int count = 0;
+        int[][] field = s.getField();
+        int[] top = s.getTop();
 
-		int cols = field[0].length;
+        int cols = field[0].length;
 
-		for(int c = 0; c < cols; c++) {
-			for(int r = top[c]; r >= 0; r--) {
-				if (isEmpty(field[r][c])) {
-					count++;
-				}
-			}
+        for(int c = 0; c < cols; c++) {
+            for(int r = top[c]; r >= 0; r--) {
+                if (isEmpty(field[r][c])) {
+                    count++;
+                }
+            }
 
-		}
+        }
 
-		return count;
-	}
+        return count;
+    }
 
-	private static boolean isEmpty(int grid) {
-		return grid == 0;
-	}
-	/********************************* End of score calculation **************************************/
+    private static boolean isEmpty(int grid) {
+        return grid == 0;
+    }
+    /********************************* End of score calculation **************************************/
 
 
-	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameters.txt";
+    /********************************* Parameter weight optimization *********************************/
+    private static final String PARAM_FILE_NAME = "parameters.txt";
 
-	/**
-	 * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
-	 * PlayerSkeleton file. If file is empty, then use default parameters.
-	 *
-	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
-	 */
-	private static void setParameters() {
-		// This will reference one line at a time
-		String line = null;
-		Integer size;
+    /**
+     * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
+     * PlayerSkeleton file. If file is empty, then use default parameters.
+     *
+     * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+     */
+    private static void setParameters() {
+        // This will reference one line at a time
+        String line = null;
+        Integer size;
 
-		// read first line from parameters.txt
-		try {
-			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
+        // read first line from parameters.txt
+        try {
+            FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
-			// Always wrap FileReader in BufferedReader.
-			BufferedReader bufferedReader =  new BufferedReader(fileReader);
+            // Always wrap FileReader in BufferedReader.
+            BufferedReader bufferedReader =  new BufferedReader(fileReader);
 
-			line = bufferedReader.readLine();
+            line = bufferedReader.readLine();
 
-			if (line == null) {
-				System.out.println(PARAM_FILE_NAME + " is empty, using default values");
-			} else {
-				size = parseInt(line);
-				populationMultipliers = new ArrayList<>();
-				for (int i = 0; i < size; i++) {
-					line = bufferedReader.readLine();
-					String[] values;
-					if (line == null) {
+            if (line == null) {
+                System.out.println(PARAM_FILE_NAME + " is empty, using default values");
+            } else {
+                size = parseInt(line);
+                populationMultipliers = new ArrayList<>();
+                for (int i = 0; i < size; i++) {
+                    line = bufferedReader.readLine();
+                    String[] values;
+                    if (line == null) {
 //						setParameters(DEFAULT_PARAMETERS.split(" "));
-						values = DEFAULT_PARAMETERS.split(" ");
-					} else {
-						values = line.split(" ");
-					}
+                        values = DEFAULT_PARAMETERS.split(" ");
+                    } else {
+                        values = line.split(" ");
+                    }
 
-					populationMultipliers.add(stringToDouble(values));
+                    populationMultipliers.add(stringToDouble(values));
 
-				}
+                }
 
-				System.out.println("========================================================");
-				for (int i = 0; i < populationMultipliers.size(); i++) {
-					System.out.println(Arrays.toString(populationMultipliers.get(i)));
-				}
-			}
+                System.out.println("========================================================");
+                for (int i = 0; i < populationMultipliers.size(); i++) {
+                    System.out.println(Arrays.toString(populationMultipliers.get(i)));
+                }
+            }
 
-			bufferedReader.close();
-		} catch (FileNotFoundException fnfe) {
+            bufferedReader.close();
+        } catch (FileNotFoundException fnfe) {
             populationMultipliers = new ArrayList<>();
             for (int i = 0; i < DEFAULT_GENERATION_SIZE; i++) {
-                String[] values;
-                values = DEFAULT_PARAMETERS.split(" ");
-                populationMultipliers.add(stringToDouble(values));
+                populationMultipliers.add(GeneticAlgorithm.createRandomChromosome());
             }
         } catch(Exception e) {
-			e.printStackTrace();
-		}
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	private static void setParameters(String[] values) {
-		for (int i = 0; i < NUM_PARAMETERS; i++) {
-			System.out.println(values[i]);
-			multiplierWeights[i] = Double.parseDouble(values[i]);
-			System.out.println(multiplierWeights[i]);
-		}
-	}
+    private static void setParameters(String[] values) {
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            System.out.println(values[i]);
+            multiplierWeights[i] = Double.parseDouble(values[i]);
+            System.out.println(multiplierWeights[i]);
+        }
+    }
 
     /**
      * Parses a String array into an array of doubles
      */
-	private static double[] stringToDouble(String[] values) {
-		double[] result = new double[NUM_PARAMETERS];
-		for (int i = 0; i < NUM_PARAMETERS; i++) {
-			result[i] = Double.parseDouble(values[i]);
-		}
+    private static double[] stringToDouble(String[] values) {
+        double[] result = new double[NUM_PARAMETERS];
+        for (int i = 0; i < NUM_PARAMETERS; i++) {
+            result[i] = Double.parseDouble(values[i]);
+        }
 
-		return result;
-	}
+        return result;
+    }
 
-	/**
-	 * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
-	 * PlayerSkeleton file.
-	 *
-	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
-	 */
-	private static void saveParameters() {
-		try {
-			FileWriter fileWriter =  new FileWriter(PARAM_FILE_NAME);
+    /**
+     * Saves parameter multiplierWeights of the current iteration. Parameters stored in parameters.txt in same directory as
+     * PlayerSkeleton file.
+     *
+     * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+     */
+    private static void saveParameters() {
+        try {
+            FileWriter fileWriter =  new FileWriter(PARAM_FILE_NAME);
 
-			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
-			String line = populationMultipliers.size() + "\n";
-			bufferedWriter.write(line);
+            String line = populationMultipliers.size() + "\n";
+            bufferedWriter.write(line);
 
-			for(int i = 0; i < populationMultipliers.size(); i++) {
-				multiplierWeights = populationMultipliers.get(i);
-				line = "" + multiplierWeights[0];
-				for (int j = 1; j < NUM_PARAMETERS; j++) {
-					line += " " + multiplierWeights[j];
-				}
-				line += "\n";
+            for(int i = 0; i < populationMultipliers.size(); i++) {
+                multiplierWeights = populationMultipliers.get(i);
+                line = "" + multiplierWeights[0];
+                for (int j = 1; j < NUM_PARAMETERS; j++) {
+                    line += " " + multiplierWeights[j];
+                }
+                line += "\n";
 
-				bufferedWriter.write(line);
-			}
-			bufferedWriter.close();
+                bufferedWriter.write(line);
+            }
+            bufferedWriter.close();
 
-			System.out.println("PARAMETERS SAFELY SAVED!");
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+            System.out.println("PARAMETERS SAFELY SAVED!");
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	/**
-	 * Prints value of parameters
-	 */
-	private static void printParameters() {
-		String line = multiplierNames[0] + ": " + multiplierWeights[0];
+    /**
+     * Prints value of parameters
+     */
+    private static void printParameters() {
+        String line = multiplierNames[0] + ": " + multiplierWeights[0];
 
-		for (int i = 1; i < NUM_PARAMETERS; i++) {
-			line += " " + multiplierNames[i] + ": " + multiplierWeights[i];
-		}
+        for (int i = 1; i < NUM_PARAMETERS; i++) {
+            line += " " + multiplierNames[i] + ": " + multiplierWeights[i];
+        }
 
-		System.out.println(line);
-	}
-	/********************************* End of Parameter weight optimization *********************************/
+        System.out.println(line);
+    }
+    /********************************* End of Parameter weight optimization *********************************/
 
 
 
