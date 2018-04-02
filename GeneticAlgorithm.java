@@ -11,7 +11,7 @@ public class GeneticAlgorithm {
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 10;
     private int generation = 1;
-    private final double MUTATION_RATE = 0.4f;
+    private final double MUTATION_RATE = 0.01f;
     private List<double[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
     private static ArrayList<Candidate> scores = new ArrayList<>();
@@ -43,10 +43,10 @@ public class GeneticAlgorithm {
      * This function is only used when there is no initial population in parameters.txt.
      * @return a normalized set of NUM_CHROMOSOMES random chromosomes
      */
-    private double[] createRandomChromosome() {
+    public static double[] createRandomChromosome() {
         double[] randomChromosome = new double[NUM_CHROMOSOMES];
         for(int i = 0; i < randomChromosome.length; i++) {
-            randomChromosome[i] = (double) (Math.random() - 0.5);
+            randomChromosome[i] = Math.random() - 0.5;
         }
 
         return normalize(randomChromosome);
@@ -226,7 +226,7 @@ public class GeneticAlgorithm {
     /**
      * Normalizes the weights of candidate vectors to fit within a unit n-sphere.
      */
-    private double[] normalize(double[] candidate) {
+    private static double[] normalize(double[] candidate) {
         double normal = 0;
         for(double weight : candidate) {
             normal += weight * weight;
