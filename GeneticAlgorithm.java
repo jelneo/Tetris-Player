@@ -199,8 +199,8 @@ public class GeneticAlgorithm {
             // Mutation
             boolean mutate = rnd.nextDouble() < mutationRate;
             if (mutate) {
-                // Change this value anywhere from -5 to 5
-                change = rnd.nextDouble() * mutationAmount * 2 - mutationAmount;
+                
+                change = mutationAmount * (rnd.nextDouble() * 2 - 1);
             }
 
             mutant[k] = candidate[k] + change;
