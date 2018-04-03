@@ -34,8 +34,8 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f, 0.2f};
-	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0 0";
+	private static double[] multiplierWeights = {0.5, -0.1, -01., -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
+	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
 	private static List<double[]> populationMultipliers;
 
 
