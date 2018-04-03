@@ -34,7 +34,7 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static double[] multiplierWeights = {0.5, -0.1, -01., -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
+	private static double[] multiplierWeights = {0.5, -0.1, -0.1, -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
 	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
 	private static List<double[]> populationMultipliers;
 
@@ -255,7 +255,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "twelvemillion.txt";
+	private static final String PARAM_FILE_NAME = "parameters.txt";
 
 	/**
          * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
@@ -593,6 +593,7 @@ public class PlayerSkeleton {
                     else if(isWell(r, c)) wellCount++;
                 }
             }
+
             return wellCount;
         }
 
@@ -610,6 +611,7 @@ public class PlayerSkeleton {
                 }
                 maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
             }
+
             return maxDepth;
         }
 
@@ -638,6 +640,7 @@ public class PlayerSkeleton {
                     }
                 }
             }
+
             return blocks;
         }
 
