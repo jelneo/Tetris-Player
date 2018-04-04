@@ -1,9 +1,9 @@
 public class Candidate implements Comparable<Candidate>{
-    private static final int NUM_PARAMETERS = 13;
+    private static final int NUM_PARAMETERS = 14;
 
     // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
     // initialized to default values
-    private double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f};
+    private double[] multiplierWeights = {0.5, -0.1, -0.1, -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2, 0.2};
     private double fitnessScore = 0;
 
     public Candidate(double[] weights, double fitness) {
