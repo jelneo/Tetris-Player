@@ -1,3 +1,4 @@
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,8 +13,7 @@ import static java.lang.Integer.parseInt;
 
 public class PlayerSkeleton {
 
-
-    /********************************* Multipliers to determine value of simulated move *********************************/
+	/********************************* Multipliers to determine value of simulated move *********************************/
     private static final int NUM_PARAMETERS = 14;
     private static final int ROWS_CLEARED_MULT_INDEX = 0;
     private static final int GLITCH_COUNT_MULT_INDEX = 1;
@@ -29,97 +29,99 @@ public class PlayerSkeleton {
     private static final int COL_TRANSITIONS_INDEX = 11;
     private static final int BALANCE_INDEX = 12;
     private static final int IDEAL_INDEX = 13;
+    private static final int DEFAULT_GENERATION_SIZE = 100;
 
-    // Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
-    // initialized to default values
-    private static double[] multiplierWeights = {0.5f, -0.1f, -01.f, -0.5f, -0.1f, 0.1f, 0.1f, 0.2f, 0.2f, 0.3f, 0.1f, 0.2f, 0.2f, 0.2f};
-    private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0 0 0 0 0 0 0 0 0";
-    private static List<double[]> populationMultipliers;
+	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
+	// initialized to default values
+	private static double[] multiplierWeights = {0.5, -0.1, -0.1, -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
+	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
+	private static List<double[]> populationMultipliers;
 
     private static String[] multiplierNames = {
             "ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
             "SUM_OF_WELLS_MUL", "MAX_WELL_DEPTH_MUL", "BLOCKS_MUL", "WEIGHTED_BLOCKS_MUL", "ROW_TRANSITIONS_MUL",
             "COL_TRANSITIONS_MUL", "BALANCE_MUL", "IDEAL_MUL"
-    };
+	};
 
-    /********************************* End of multipliers *********************************/
+	/********************************* End of multipliers *********************************/
 
-    private static boolean visualMode = false;
-    private static final int DATA_SIZE = 1000;
-    private static final int TURNS_LIMIT = Integer.MAX_VALUE;
-    private static final int SAMPLING_INTERVAL = 100;
-    private static GeneticAlgorithm geneticAlgorithm;
+	private static boolean visualMode = false;
+	private static final int DATA_SIZE = 30;
+	private static final int TURNS_LIMIT = 5000;//Integer.MAX_VALUE;
+	private static final int SAMPLING_INTERVAL = 100;
+	private static GeneticAlgorithm geneticAlgorithm;
 
-    //implement this function to have a working system
-    /**
-     * Picks the move with the highest value.
-     *
-     * @param s present state
-     * @param legalMoves List of legal moves
-     * @return the move that has the maximum value based on
-     * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
-     */
-    public int pickMove(State s, int[][] legalMoves) {
+	//implement this function to have a working system
+	/**
+	 * Picks the move with the highest value.
+	 *
+	 * @param s present state
+	 * @param legalMoves List of legal moves
+	 * @return the move that has the maximum value based on
+	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
+	 */
+	public int pickMove(State s, int[][] legalMoves) {
 
-        int maxIdx = 0;
-        double max = simulateMove(s, legalMoves[0]);
-        for (int i = 1; i < legalMoves.length; i++) {
-            if (simulateMove(s, legalMoves[i]) > max) {
-                maxIdx = i;
-                max = simulateMove(s, legalMoves[i]);
-            }
-        }
+		int maxIdx = 0;
+		double max = simulateMove(s, legalMoves[0]);
+		for (int i = 1; i < legalMoves.length; i++) {
+			if (simulateMove(s, legalMoves[i]) > max) {
+				maxIdx = i;
+				max = simulateMove(s, legalMoves[i]);
+			}
+		}
 
-        return maxIdx;
-    }
+		return maxIdx;
+	}
 
-    // Simulates a move and returns a double that allows for evaluation. The higher the better.
-    public double simulateMove(State s, int[] move) {
-        SimulatedState ss = new SimulatedState(s);
-        return ss.getMoveValue(move);
-    }
+	// Simulates a move and returns a double that allows for evaluation. The higher the better.
+	public double simulateMove(State s, int[] move) {
+		SimulatedState ss = new SimulatedState(s);
+		return ss.getMoveValue(move);
+	}
 
-    public static void main(String[] args) {
-        setVisualMode();
-        setParameters();
-        printParameters();
+	public static void main(String[] args) {
+		setVisualMode();
+		setParameters();
+		printParameters();
+		
+		executeDataSet();
 
-        executeDataSet();
+		multiplierWeights = geneticAlgorithm.getFittestCandidate();
+		populationMultipliers = geneticAlgorithm.getLatestPopulation();
 
-        multiplierWeights = geneticAlgorithm.getFittestCandidate();
-        populationMultipliers = geneticAlgorithm.getLatestPopulation();
+		printParameters();
+		saveParameters();
+	}
 
-        printParameters();
-        saveParameters();
-    }
+	/**
+	 * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
+	 */
+	private static void executeDataSet() {
+		int maxScore = Integer.MIN_VALUE;
+		int minScore = Integer.MAX_VALUE;
+		int sum = 0;
+		int var = 0;
+		int counter = DATA_SIZE; // set to 30 for more accurate sample size
 
-    /**
-     * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
-     */
-    private static void executeDataSet() {
-        int maxScore = Integer.MIN_VALUE;
-        int minScore = Integer.MAX_VALUE;
-        int sum = 0;
-        int var = 0;
-        int counter = DATA_SIZE; // set to 30 for more accurate sample size
+		geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
+		multiplierWeights = populationMultipliers.get(0);
+		while(counter-- > 0) {
+			State s = new State();
+			int score = 0;
 
-        geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
-        multiplierWeights = populationMultipliers.get(0);
-        while(counter-- > 0) {
-            State s = new State();
-            int score = 0;
+			if (visualMode) {
+				visualize(s);
+			} else {
+				PlayerSkeleton p = new PlayerSkeleton();
+				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
+					s.makeMove(p.pickMove(s, s.legalMoves()));
+					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+						score += getScore(s);
+					}
+				}
+			}
 
-            if (visualMode) {
-                visualize(s);
-            } else {
-                PlayerSkeleton p = new PlayerSkeleton();
-                while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
-                    s.makeMove(p.pickMove(s, s.legalMoves()));
-                    if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-                        score += getScore(s);
-                    }
-                }
-            }
             System.out.println("Row Cleared: " + s.getRowsCleared());
             geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
             maxScore = Math.max(maxScore, score);
@@ -184,6 +186,12 @@ public class PlayerSkeleton {
     /********************************* Score calculation *********************************************/
     private static final int MAX_HEALTHY_HEIGHT = 7;
     private static final int HOLE_MULTIPLIER = -4;
+
+    /**
+     * Returns the health score of the state of the board, based on max height and number of holes
+     * @param s current state of the board
+     * @return health score
+     */
     private static int getScore(State s) {
         int maxHeight = getMaxHeight(s);
         // Increasing bonus given for decreasing heights until MAX_HEALTHY_HEIGHT.
@@ -195,10 +203,16 @@ public class PlayerSkeleton {
         return score;
     }
 
+    /**
+     * Returns the max height of the occupied cells in the state
+     */
     private static int getMaxHeight(State s) {
         return getMax(s.getTop());
     }
 
+    /**
+     * Returns the maximum element in an integer array
+     */
     private static int getMax(int[] arr) {
         int max = 0;
         for (int i = 0; i < arr.length; i++) {
@@ -209,6 +223,9 @@ public class PlayerSkeleton {
         return max;
     }
 
+    /**
+     * Returns the number of holes/glitches in the state
+     */
     private static int getHoles(State s) {
         int count = 0;
         int[][] field = s.getField();
@@ -231,41 +248,42 @@ public class PlayerSkeleton {
     private static boolean isEmpty(int grid) {
         return grid == 0;
     }
-    /********************************* End of score calculation **************************************/
+
+	/********************************* End of score calculation **************************************/
 
 
-    /********************************* Parameter weight optimization *********************************/
-    private static final String PARAM_FILE_NAME = "parameters.txt";
+	/********************************* Parameter weight optimization *********************************/
+	private static final String PARAM_FILE_NAME = "parameters.txt";
 
-    /**
-     * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
-     * PlayerSkeleton file. If file is empty, then use default parameters.
-     *
-     * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
-     */
-    private static void setParameters() {
-        // This will reference one line at a time
-        String line = null;
-        Integer size;
+	/**
+         * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
+	 * PlayerSkeleton file. If file is empty, then use default parameters.
+	 *
+	 * {@link PlayerSkeleton#setParameters(String[])} for information about how the parameters are set.
+	 */
+	private static void setParameters() {
+		// This will reference one line at a time
+		String line;
+		Integer size;
 
-        // read first line from parameters.txt
-        try {
-            FileReader fileReader = new FileReader(PARAM_FILE_NAME);
+		// read first line from parameters.txt
+		try {
+			FileReader fileReader = new FileReader(PARAM_FILE_NAME);
 
-            // Always wrap FileReader in BufferedReader.
-            BufferedReader bufferedReader =  new BufferedReader(fileReader);
+			// Always wrap FileReader in BufferedReader.
+			BufferedReader bufferedReader =  new BufferedReader(fileReader);
 
-            line = bufferedReader.readLine();
+			line = bufferedReader.readLine();
 
-            if (line == null) {
-                System.out.println(PARAM_FILE_NAME + " is empty, using default values");
-            } else {
-                size = parseInt(line);
-                populationMultipliers = new ArrayList<>();
-                for (int i = 0; i < size; i++) {
-                    line = bufferedReader.readLine();
-                    String[] values;
-                    if (line == null) {
+			if (line == null) {
+				System.out.println(PARAM_FILE_NAME + " is empty, using default values");
+			} else {
+				size = parseInt(line);
+				populationMultipliers = new ArrayList<>();
+				for (int i = 0; i < size; i++) {
+					line = bufferedReader.readLine();
+					String[] values;
+					if (line == null) {
 //						setParameters(DEFAULT_PARAMETERS.split(" "));
                         values = DEFAULT_PARAMETERS.split(" ");
                     } else {
@@ -283,6 +301,11 @@ public class PlayerSkeleton {
             }
 
             bufferedReader.close();
+        } catch (FileNotFoundException fnfe) {
+            populationMultipliers = new ArrayList<>();
+            for (int i = 0; i < DEFAULT_GENERATION_SIZE; i++) {
+                populationMultipliers.add(GeneticAlgorithm.createRandomChromosome());
+            }
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -297,6 +320,9 @@ public class PlayerSkeleton {
         }
     }
 
+    /**
+     * Parses a String array into an array of doubles
+     */
     private static double[] stringToDouble(String[] values) {
         double[] result = new double[NUM_PARAMETERS];
         for (int i = 0; i < NUM_PARAMETERS; i++) {
@@ -384,7 +410,9 @@ public class PlayerSkeleton {
             nextPiece = s.getNextPiece();
         }
 
-        // Returns the value of making a move
+        /**
+         * Returns the value of making a move, defined by weights and parameters.
+         */
         public double getMoveValue(int move[]) {
             return getMoveValue(move[ORIENT], move[SLOT]);
         }
@@ -448,54 +476,29 @@ public class PlayerSkeleton {
             }
             /********************************* End of simulation *********************************/
 
-            int maxHeight = 0;
 
-            for (int i = 0; i < top.length; i++) {
-                if (top[i] > maxHeight) {
-                    maxHeight = top[i];
-                }
-            }
 
-            return multiplierWeights[BUMPINESS_MULT_INDEX] * getBumpiness(top)
-                    + multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight(top)
-                    + multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
-                    + multiplierWeights[MAX_HEIGHT_MULT_INDEX] * maxHeight
-                    + multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount(field, top)
-                    + multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles(field, top)
-                    + multiplierWeights[SUM_OF_ALL_WELLS_INDEX] * getSumofAllWells(field)
-                    + multiplierWeights[MAX_WELL_DEPTH_INDEX] * getMaxWellDepth(field)
+            return multiplierWeights[ROWS_CLEARED_MULT_INDEX] * rowsCleared
+                    + multiplierWeights[GLITCH_COUNT_MULT_INDEX] * getGlitchCount()
+                    + multiplierWeights[BUMPINESS_MULT_INDEX] * getBumpiness()
+                    + multiplierWeights[TOTAL_HEIGHT_MULT_INDEX] * getTotalHeight()
+                    + multiplierWeights[MAX_HEIGHT_MULT_INDEX] * getMaxHeight()
+                    + multiplierWeights[VERTICALLY_CONNECTED_HOLES_MULT_INDEX] * getVerticalHeightHoles()
+                    + multiplierWeights[SUM_OF_ALL_WELLS_INDEX] * getSumofAllWells()
+                    + multiplierWeights[MAX_WELL_DEPTH_INDEX] * getMaxWellDepth()
                     + multiplierWeights[BLOCKS_INDEX] * getBlocks()
                     + multiplierWeights[WEIGHTED_BLOCKS_INDEX] * getWeightedBlocks()
                     + multiplierWeights[ROW_TRANSITIONS_INDEX] * getRowTransitions()
                     + multiplierWeights[COL_TRANSITIONS_INDEX] * getColTransitions()
-                    + multiplierWeights[BALANCE_INDEX] * getBalance(field)
-                    + multiplierWeights[IDEAL_INDEX] * getIdealPositions(top);
+                    + multiplierWeights[BALANCE_INDEX] * getImbalance()
+                    + multiplierWeights[IDEAL_INDEX] * getIdealPositions();
         }
 
-        // Checks for how bumpy the top is
-        // Heuristic 1
-        public int getBumpiness(int[] top) {
-            int bumpiness = 0;
-            for (int i = 0; i < top.length - 1; i++) {
-                bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
-            }
-
-            return bumpiness;
-        }
-
-        // Returns the sum of heights
+        /**
+         * Returns the number of glitches (covered holes)
+         */
         // Heuristic 2
-        public int getTotalHeight(int[] top) {
-            int totalHeight = 0;
-            for (int i = 0; i < top.length; i++) {
-                totalHeight += top[i];
-            }
-
-            return totalHeight;
-        }
-
-        // Heuristic 5
-        public int getGlitchCount(int[][] field, int[] top) {
+        private int getGlitchCount() {
             int glitchCount = 0;
 
             for (int c = 0; c < field[0].length; c++) {
@@ -510,10 +513,53 @@ public class PlayerSkeleton {
         }
 
         /**
+         * Returns the "bumpiness", or the square of the sum of absolute differences between the highest occupied cells
+         * of every pair of adjacent columns.
+         */
+        // Heuristic 3
+        private int getBumpiness() {
+            int bumpiness = 0;
+            for (int i = 0; i < top.length - 1; i++) {
+                bumpiness += Math.pow(Math.abs(top[i] - top[i + 1]), 2);
+            }
+
+            return bumpiness;
+        }
+
+        /**
+         * Returns the aggregate height
+         */
+        // Heuristic 4
+        private int getTotalHeight() {
+            int totalHeight = 0;
+            for (int i = 0; i < top.length; i++) {
+                totalHeight += top[i];
+            }
+
+            return totalHeight;
+        }
+
+        /**
+         * Returns maximum height of the board
+         */
+        // Heuristic 5
+        private int getMaxHeight() {
+            int maxHeight = 0;
+
+            for (int i = 0; i < top.length; i++) {
+                if (top[i] > maxHeight) {
+                    maxHeight = top[i];
+                }
+            }
+
+            return maxHeight;
+        }
+
+        /**
          * Returns the number of vertically counted holes. Each vertically connected hole is counted as one.
          */
         // Heuristic 6
-        public int getVerticalHeightHoles(int[][] field, int[] top) {
+        private int getVerticalHeightHoles() {
             int verticalHoles = 0;
             int[] curr = new int[top.length];
 
@@ -533,61 +579,52 @@ public class PlayerSkeleton {
             return verticalHoles;
         }
 
-        private int getHoles(int[][] field) {
-            int count = 0;
-
-            int rows = field.length;
-            int cols = field[0].length;
-
-            for(int c = 0; c < cols; c++) {
-                boolean capped = false;
-                for(int r = rows - 1; r >= 0; r--) {
-                    if(!isEmpty(field[r][c])) {
-                        capped = true;
-                    } else if (isEmpty(field[r][c]) && capped)
-                        count++;
-                }
-
-            }
-
-            return count;
-        }
-
-        // Returns the sum of all wells
+        /**
+         * Returns the sum of all cells that can be considered wells
+         */
         // Heuristic 7
-        public int getSumofAllWells(int[][] field) {
+        private int getSumofAllWells() {
             int wellCount = 0;
             for(int c = 0; c < field[0].length; c++) {
                 for(int r = top[c]; r < field.length; r++) {
                     if(field[r][c] != 0) break;
-                    else if(isWell(field, r, c)) wellCount++;
+                    else if(isWell(r, c)) wellCount++;
                 }
             }
+
             return wellCount;
         }
 
-        // Returns the maximum well depth
+        /**
+         * Returns the depth of the deepest well
+         */
         // Heuristic 8
-        public int getMaxWellDepth(int[][] field) {
+        private int getMaxWellDepth() {
             int maxDepth = 0;
             for (int c = 0; c < field[0].length; c++) {
                 int currDepth = 0;
                 for(int r = top[c]; r < field.length; r++) {
                     if(field[r][c] != 0) break;
-                    else if (isWell(field, r, c)) currDepth++;
+                    else if (isWell(r, c)) currDepth++;
                 }
                 maxDepth = (currDepth > maxDepth)? currDepth : maxDepth;
             }
+
             return maxDepth;
         }
 
-        // Returns true if block at (r,c) is a well
-        public boolean isWell(int[][] field, int r, int c) {
+        /**
+         * Returns true if block at (r,c) is a well
+         */
+        private boolean isWell(int r, int c) {
             return (((c == 0) && (field[r][c + 1] != 0))
                     || ((c == field[0].length - 1) && (field[r][c - 1] != 0))
                     || ((c != 0) && (c != field[0].length - 1) &&(field[r][c - 1] != 0) && (field[r][c + 1] != 0)));
         }
 
+        /**
+         * Returns the number of total occupied cells
+         */
         // Heuristic 9
         private int getBlocks() {
             int rows = field.length;
@@ -605,6 +642,10 @@ public class PlayerSkeleton {
             return blocks;
         }
 
+        /**
+         * Returns the sum of weighted blocks. Each block is multiplied by its height (with the bottom row having a
+         * height of 1)
+         */
         // Heuristic 10
         private int getWeightedBlocks() {
             int rows = field.length;
@@ -622,6 +663,10 @@ public class PlayerSkeleton {
             return blocks;
         }
 
+        /**
+         * Returns the number of occupied-unoccupied row transitions (and vice versa). The outside columns on either
+         * side are considered occupied.
+         */
         // Heuristic 11
         private int getRowTransitions() {
             int rows = field.length;
@@ -647,6 +692,10 @@ public class PlayerSkeleton {
             return transitions;
         }
 
+        /**
+         * Returns the number of occupied-unoccupied column transitions (and vice versa). The outside row on the bottom
+         * is considered occupied.
+         */
         // Heuristic 12
         private int getColTransitions() {
             int rows = field.length;
@@ -668,7 +717,10 @@ public class PlayerSkeleton {
             return transitions;
         }
 
-        private int getGridsInCol(int[][] field, int col) {
+        /**
+         * Returns the total number of occupied cells in a column of the field
+         */
+        private int getBlocksInCol(int col) {
             int count = 0;
 
             int rows = field.length;
@@ -682,29 +734,33 @@ public class PlayerSkeleton {
             return count;
         }
 
+        /**
+         * Returns the imbalance, given by the sum of the absolute differences of the number of occupied cells between
+         * every pair of adjacent columns.
+         */
         // Heuristic 13
-        private int getBalance(int[][] field) {
+        private int getImbalance() {
             int cols = field[0].length;
 
-            int balanceness = 0;
+            int imbalance = 0;
 
             for(int c = 0; c < cols - 1; c++) {
-                balanceness += Math.abs(getGridsInCol(field, c) - getGridsInCol(field, c + 1));
+                imbalance += Math.abs(getBlocksInCol(c) - getBlocksInCol(c + 1));
             }
 
-            return balanceness;
+            return imbalance;
         }
 
         // Heuristic 14
-        private int getIdealPositions(int[] top) {
-            int[][] idealPositions = {{0, 0}, {0, -1}, {0, 1}, {0, 2}, {0, -2}, {0, 0, 0}, {0, 0, 1}, {0, -1, -1},
-                    {0, 1, 1}, {0, 0, -1}, {0, -1, 0}, {0, 0, 0, 0}};
+        private int getIdealPositions() {
+            int[][] idealPositions = {{3, 0}, {2, -1}, {2, 1}, {1, 2}, {1, -2}, {3, 0, 0}, {1, 0, 1}, {1, -1, -1},
+                    {1, 1, 1}, {1, 0, -1}, {1, -1, 0}, {1, 0, 0, 0}};
             int positions = 0;
 
             for (int i = 0; i < top.length; i++) {
                 for (int j = 0; j < idealPositions.length; j++) {
                     if (checkIdealPosition(idealPositions[j], i, top)) {
-                        positions++;
+                        positions += idealPositions[j][0];
                     }
                 }
             }
@@ -717,7 +773,6 @@ public class PlayerSkeleton {
             if (pos + idealPosition.length > top.length) {
                 return false;
             } else {
-
                 int first = top[pos];
                 for (int i = 1; i < idealPosition.length; i++) {
                     if (first + idealPosition[i] != top[pos + i]) {
@@ -729,6 +784,9 @@ public class PlayerSkeleton {
             }
         }
 
+        /**
+         * Checks whether a grid is empty
+         */
         private boolean isEmpty(int grid) {
             return grid == 0;
         }

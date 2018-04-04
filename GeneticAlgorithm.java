@@ -5,13 +5,12 @@ import java.util.*;
  */
 public class GeneticAlgorithm {
     private static final int NUM_CHROMOSOMES = 14;
-    private static final double PERCENTAGE_OFFSPRING = 0.3f;
-    private static final double MUTATION_AMOUNT = 0.2f;//0.01f;
+    private static final double PERCENTAGE_OFFSPRING = 0.3;
+    private static final double MUTATION_AMOUNT = 0.2;
     // we want the first mutation to occur with higher probability to get out of local maximas
-    private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 100;
     private int generation = 1;
-    private final double MUTATION_RATE = 1.0f;//0.2f;
+    private final double MUTATION_RATE = 0.2;
     private List<double[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
     private static ArrayList<Candidate> scores = new ArrayList<>();
@@ -43,10 +42,10 @@ public class GeneticAlgorithm {
      * This function is only used when there is no initial population in parameters.txt.
      * @return a normalized set of NUM_CHROMOSOMES random chromosomes
      */
-    private double[] createRandomChromosome() {
+    public static double[] createRandomChromosome() {
         double[] randomChromosome = new double[NUM_CHROMOSOMES];
         for(int i = 0; i < randomChromosome.length; i++) {
-            randomChromosome[i] = (double) (Math.random() - 0.5);
+            randomChromosome[i] = Math.random() - 0.5;
         }
 
         return normalize(randomChromosome);
@@ -61,20 +60,16 @@ public class GeneticAlgorithm {
 
         List<double[]> offspring_population = new ArrayList<>(population/2);
         // Pair up two winners at a time
-        for (int i = 0; i < population - 1; i++) {
-            Candidate winner1 = scores.get(population - i - 1);
-            Candidate winner2 = scores.get(population - i - 2);
+        int offspringNumber = (int) (((1 - PERCENTAGE_OFFSPRING) * population + 1) / 2) + 1;
+        for (int i = 0; i < offspringNumber; i++) {
+            Candidate candidate1 = scores.get(population - i - 1);
+            Candidate candidate2 = scores.get(population - i - 2);
 
-//            System.out.println(Arrays.toString(winner1.getMultiplierWeights()));
-//            System.out.println(Arrays.toString(winner2.getMultiplierWeights()));
-
-            double[] firstChild = mutateByCrossoverCandidates(winner1, winner2);
-//            System.out.println("first child: " + Arrays.toString(firstChild));
-//            offspring_population.add(firstChild);
+            double[] offspring = mutateByCrossoverCandidates(candidate1, candidate2);
 
             for (int j = 0; j < 2; j++) {
                 offspring_population.add(
-                        mutateCandidateRandomly(firstChild,
+                        mutateCandidateRandomly(offspring,
                                 MUTATION_RATE,
                                 MUTATION_AMOUNT));
             }
@@ -187,7 +182,7 @@ public class GeneticAlgorithm {
      * @param candidate candidate to be mutated
      * @param mutationRate mutation rate
      * @param mutationAmount a double number that is used to mutate the chromosome
-     * @return
+     * @return an array containing the mutated weights
      */
     private double[] mutateCandidateRandomly(double[] candidate, double mutationRate, double mutationAmount) {
         double[] mutant = new double[NUM_CHROMOSOMES];
@@ -197,8 +192,8 @@ public class GeneticAlgorithm {
             // Mutation
             boolean mutate = rnd.nextDouble() < mutationRate;
             if (mutate) {
-                // Change this value anywhere from -5 to 5
-                change = rnd.nextDouble() * mutationAmount * 2 - mutationAmount;
+
+                change = mutationAmount * (rnd.nextDouble() * 2 - 1);
             }
 
             mutant[k] = candidate[k] + change;
@@ -224,13 +219,13 @@ public class GeneticAlgorithm {
     /**
      * Normalizes the weights of candidate vectors to fit within a unit n-sphere.
      */
-    private double[] normalize(double[] candidate) {
+    private static double[] normalize(double[] candidate) {
         double normal = 0;
         for(double weight : candidate) {
             normal += weight * weight;
         }
 
-        normal = (double) Math.sqrt((double) normal);
+        normal = Math.sqrt(normal);
 
         if (normal == 0) {
             return candidate;
