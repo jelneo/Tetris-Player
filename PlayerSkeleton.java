@@ -47,11 +47,13 @@ public class PlayerSkeleton {
 	public int pickMove(State s, int[][] legalMoves) {
 
 		int maxIdx = 0;
-		float max = simulateMove(s, legalMoves[0]);
+		double max = simulateMove(s, legalMoves[0]);
+		double moveVal;
 		for (int i = 1; i < legalMoves.length; i++) {
-			if (simulateMove(s, legalMoves[i]) > max) {
+		    moveVal = simulateMove(s, legalMoves[i]);
+			if (moveVal > max) {
 				maxIdx = i;
-				max = simulateMove(s, legalMoves[i]);
+				max = moveVal;
 			}
 		}
 
@@ -59,7 +61,7 @@ public class PlayerSkeleton {
 	}
 
 	// Simulates a move and returns a float that allows for evaluation. The higher the better.
-	public float simulateMove(State s, int[] move) {
+	public double simulateMove(State s, int[] move) {
 		SimulatedState ss = new SimulatedState(s);
 		return ss.getMoveValue(move);
 	}
@@ -253,11 +255,11 @@ public class PlayerSkeleton {
 		}
 
 		// Returns the value of making a move
-		public float getMoveValue(int move[]) {
+		public double getMoveValue(int move[]) {
 			return getMoveValue(move[ORIENT], move[SLOT]);
 		}
 
-		public float getMoveValue(int orient, int slot) {
+		public double getMoveValue(int orient, int slot) {
 			//height if the first column makes contact
 			int height = top[slot]-getpBottom()[nextPiece][orient][0];
 			//for each column beyond the first in the piece
