@@ -34,8 +34,8 @@ public class PlayerSkeleton {
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
 	// initialized to default values
-	private static double[] multiplierWeights = {0.5, -0.1, -0.1, -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2};
-	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
+	private static double[] multiplierWeights = {0.5, -0.1, -0.1, -0.5, -0.1, 0.1, 0.1, 0.2, 0.2, 0.3, 0.1, 0.2, 0.2, 0.1};
+	private static String DEFAULT_PARAMETERS = "0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1";
 	private static List<double[]> populationMultipliers;
 
 
@@ -48,7 +48,7 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 30;
+	private static final int DATA_SIZE = 1000;
 	private static final int TURNS_LIMIT = 5000;//Integer.MAX_VALUE;
 	private static final int SAMPLING_INTERVAL = 100;
 	private static GeneticAlgorithm geneticAlgorithm;
@@ -255,7 +255,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "parameters.txt";
+	private static final String PARAM_FILE_NAME = "start.txt";
 
 	/**
          * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
