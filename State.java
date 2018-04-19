@@ -8,8 +8,10 @@ public class State {
 	public static final int COLS = 10;
 	public static final int ROWS = 21;
 	public static final int N_PIECES = 7;
+	public TileDistribution td;
 
 	public boolean lost = false;
+
 
 	public TLabel label;
 
@@ -154,15 +156,39 @@ public class State {
 
 	// Constructor
 	public State() {
+//		int selection = (int) (Math.random() * distributions.length);
+		int selection = 0;
+//		System.out.println("Selection: " + selection + "\n");
+		td = new TileDistribution(distributions[selection]);
 		nextPiece = randomPiece();
 	}
 
+	public State(int distributionIndex) {
+		td = new TileDistribution(distributions[distributionIndex]);
+		nextPiece = randomPiece();
+	}
+
+	public void setStateDistribution(int distributionIndex) {
+		td = new TileDistribution(distributions[distributionIndex]);
+	}
+
+
 	/********************************* Simulation methods *********************************/
 
+	public static int[][] distributions = {
+			{10, 10, 10, 10, 10, 10, 10}, // Random distribution
+			{1, 1, 1, 2, 2, 3, 3},
+			{1, 1, 2, 3, 3, 5, 5},
+			{0, 0, 1, 1, 1, 3, 3},
+			{0, 0, 0, 0, 0, 1, 1} // S-Z distribution
+	};
+
 	// Random integer, returns 0-6
-//	public boolean left = true;
+	public boolean left = true;
 	private int randomPiece() {
-		return (int)(Math.random() * N_PIECES);
+
+		return td.selectRandomTile();
+		//		return (int)(Math.random() * N_PIECES);
 //		if (left) {
 //			left = false;
 //			return 5;

@@ -11,7 +11,7 @@ public class GeneticAlgorithm {
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
     private int population = 10;
     private int generation = 1;
-    private final double MUTATION_RATE = 0.01;
+    private final double MUTATION_RATE = 0.05;
     private List<double[]> chromosomes = new ArrayList<>();
     private int currentCandidate = 0;
     private static ArrayList<Candidate> scores = new ArrayList<>();

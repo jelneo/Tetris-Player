@@ -2,6 +2,7 @@ import java.util.*;
 
 public class TileDistribution {
     static final int NUMBER_OF_TILES = 7;
+    static final int INITIAL_NUMBER_OF_EACH_TILES = 0;
 
     private int totalCount = 0;
     private Map<Integer, MutableInt> tileDistribution = new HashMap<>();
@@ -9,8 +10,8 @@ public class TileDistribution {
 
     TileDistribution() {
         for (int i = 0; i < NUMBER_OF_TILES; i++) {
-            tileDistribution.put(i, new MutableInt(10));
-            totalCount += 10;
+            tileDistribution.put(i, new MutableInt(INITIAL_NUMBER_OF_EACH_TILES));
+            totalCount += INITIAL_NUMBER_OF_EACH_TILES;
         }
     }
 
@@ -57,6 +58,16 @@ public class TileDistribution {
             return 6;
         }
     }
+
+    public void printFrequencies() {
+        String buffer = "Tile Frequency: ";
+        for (int i = 0; i < NUMBER_OF_TILES; i++) {
+            buffer += "(" + i + "," + getFreq(i) + ") ";
+        }
+
+        System.out.println(buffer);
+    }
+
 
     private List<Double> getCumulFreq() {
         double cumul = 0;
