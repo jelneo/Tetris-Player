@@ -178,7 +178,7 @@ public class State {
 	public static int[][] distributions = {
 			{10, 10, 10, 10, 10, 10, 10}, // Random distribution
 			{1, 1, 1, 2, 2, 3, 3},
-			{1, 1, 2, 3, 3, 5, 5},
+			{1, 1, 1, 1, 1, 3, 3},
 			{0, 0, 1, 1, 1, 3, 3},
 			{0, 0, 0, 0, 0, 1, 1} // S-Z distribution
 	};

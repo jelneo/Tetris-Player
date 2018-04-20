@@ -1,8 +1,5 @@
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import java.io.FileWriter;
 import java.io.FileReader;
@@ -31,6 +28,7 @@ public class PlayerSkeleton {
     private static final int BALANCE_INDEX = 12;
     private static final int IDEAL_INDEX = 13;
     private static final int DEFAULT_GENERATION_SIZE = 100;
+    private static final int NUMBER_OF_SELECTED_EXTENSIONS = 3;
 
     private static final int ZEROTH_STAGE = 0;
     private static final int FIRST_STAGE = 300;
@@ -73,33 +71,42 @@ public class PlayerSkeleton {
 	public int pickMove(State s, int[][] legalMoves) {
 
 		int maxIdx = 0;
-		double max = simulateMove(s, legalMoves[0]);
-		for (int i = 1; i < legalMoves.length; i++) {
-			if (simulateMove(s, legalMoves[i]) > max) {
-				maxIdx = i;
-				max = simulateMove(s, legalMoves[i]);
-			}
+		double max = Double.NEGATIVE_INFINITY;
+		List<StateScorePair> scores = new ArrayList<>();
+		for (int i = 0; i < legalMoves.length; i++) {
+		    StateScorePair ssp = simulateMove(s, legalMoves[i], i);
+		    scores.add(ssp);
 		}
+
+        Collections.sort(scores);
+
+		// Select best three moves to make
+		for (int i = 0; i < NUMBER_OF_SELECTED_EXTENSIONS; i++) {
+            StateScorePair ssp = scores.get(scores.size() - i - 1);
+            Double score = simulateInnerMove(ssp.getScore(), ssp.getState(), ssp.getIndex());
+            if (score > max) {
+                maxIdx = ssp.getIndex();
+                max = score;
+            }
+        }
 
 		return maxIdx;
 	}
 
     // Simulates a move and returns a double that allows for evaluation. The higher the better.
-    public double simulateMove(State s, int[] move) {
+    public double simulateInnerMove(double outerMoveScore, SimulatedState ss, int index) {
         // for every legal move, first simulate it
         //  then for each of the 7 tiles,
         //      multiply the (max of scores from each possible move (4 rotations - symmetries)) with (freq of tiles)
         //  and sum all these values return to give a sense of how good the state will be if that legal move is made
         // pick the best move like normal
 
-        SimulatedState ss = new SimulatedState(s);
-        double outerMoveScore = ss.getMoveValue(move);
         double finalScore = 0;
         for (int j = 0; j < State.N_PIECES; j++) {
             ss.setNextPiece(j);
             double maxTileScore = Double.NEGATIVE_INFINITY;
             for (int k = 0; k < State.legalMoves[j].length; k++) {
-                double moveScore = Math.abs(simulateInnerMove(ss, State.legalMoves[j][k]));
+                double moveScore = Math.abs(simulateMove(ss, State.legalMoves[j][k], index).getScore());
 //                System.out.println("final socre 1: " + moveScore);
                 if (moveScore > maxTileScore) {
                     maxTileScore = moveScore;
@@ -114,9 +121,9 @@ public class PlayerSkeleton {
         return finalScore * outerMoveScore; // why multiply? idk
     }
 
-    public double simulateInnerMove(State s, int[] move) {
+    public StateScorePair simulateMove(State s, int[] move, int index) {
         SimulatedState ss = new SimulatedState(s);
-        return ss.getMoveValue(move);
+        return new StateScorePair(ss, ss.getMoveValue(move), index);
     }
 
 	public static void main(String[] args) {
@@ -864,4 +871,33 @@ public class PlayerSkeleton {
     }
 
     /********************************* End of nested class for state simulation *********************************/
+
+    class StateScorePair implements Comparable<StateScorePair>{
+        SimulatedState state;
+        double score;
+        int index;
+
+        StateScorePair(SimulatedState state, double score, int index) {
+            this.state = state;
+            this.score = score;
+            this.index = index;
+        }
+
+        SimulatedState getState() {
+            return this.state;
+        }
+
+        double getScore() {
+            return this.score;
+        }
+
+        int getIndex() {
+            return this.index;
+        }
+
+        @Override
+        public int compareTo(StateScorePair other) {
+            return Double.compare(score, other.getScore());
+        }
+    }
 }
