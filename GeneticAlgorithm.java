@@ -9,7 +9,7 @@ public class GeneticAlgorithm {
     private static final double MUTATION_AMOUNT = 0.2;
     // we want the first mutation to occur with higher probability to get out of local maximas
     private static final double INITIAL_MUTATION_AMOUNT = 10 * MUTATION_AMOUNT;
-    private int population = 10;
+    private int population = 20;
     private int generation = 1;
     private final double MUTATION_RATE = 0.05;
     private List<double[]> chromosomes = new ArrayList<>();

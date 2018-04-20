@@ -157,7 +157,7 @@ public class State {
 	// Constructor
 	public State() {
 //		int selection = (int) (Math.random() * distributions.length);
-		int selection = 0;
+		int selection = 4;
 //		System.out.println("Selection: " + selection + "\n");
 		td = new TileDistribution(distributions[selection]);
 		nextPiece = randomPiece();

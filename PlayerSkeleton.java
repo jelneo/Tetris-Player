@@ -31,10 +31,10 @@ public class PlayerSkeleton {
     private static final int NUMBER_OF_SELECTED_EXTENSIONS = 3;
 
     private static final int ZEROTH_STAGE = 0;
-    private static final int FIRST_STAGE = 300;
-    private static final int SECOND_STAGE = 600;
-    private static final int THIRD_STAGE = 800;
-    private static final int FOURTH_STAGE = 1000;
+    private static final int FIRST_STAGE = 200;
+    private static final int SECOND_STAGE = 400;
+    private static final int THIRD_STAGE = 600;
+    private static final int FOURTH_STAGE = 800;
     private static int CURR_STAGE = 0;
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
@@ -56,7 +56,7 @@ public class PlayerSkeleton {
 	private static boolean visualMode = false;
 	private static final int DATA_SIZE = 1000;
 	private static final int TURNS_LIMIT = 5000;//Integer.MAX_VALUE;
-	private static final int SAMPLING_INTERVAL = 100;
+	private static final int SAMPLING_INTERVAL = 20;
 	private static GeneticAlgorithm geneticAlgorithm;
 
 	//implement this function to have a working system
@@ -107,13 +107,11 @@ public class PlayerSkeleton {
             double maxTileScore = Double.NEGATIVE_INFINITY;
             for (int k = 0; k < State.legalMoves[j].length; k++) {
                 double moveScore = Math.abs(simulateMove(ss, State.legalMoves[j][k], index).getScore());
-//                System.out.println("final socre 1: " + moveScore);
                 if (moveScore > maxTileScore) {
                     maxTileScore = moveScore;
                 }
             }
 
-//            System.out.println("max tile score: " + maxTileScore);
             finalScore += maxTileScore * td.getFreq(j);
 
         }
@@ -167,20 +165,20 @@ public class PlayerSkeleton {
                     td.increment(s.getNextPiece());
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-					    if (s.getTurnNumber() > FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
+					    if (s.getTurnNumber() >= FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
 					        s.setStateDistribution(4);
 					        td = new TileDistribution();
 					        CURR_STAGE = FOURTH_STAGE;
-                        } else if (s.getTurnNumber() > THIRD_STAGE && CURR_STAGE == SECOND_STAGE) {
+                        } else if (s.getTurnNumber() >= THIRD_STAGE && CURR_STAGE == SECOND_STAGE) {
                             s.setStateDistribution(3);
                             td = new TileDistribution();
                             CURR_STAGE = THIRD_STAGE;
-                        } else if (s.getTurnNumber() > SECOND_STAGE && CURR_STAGE == FIRST_STAGE) {
-                            s.setStateDistribution(2);
+                        } else if (s.getTurnNumber() >= SECOND_STAGE && CURR_STAGE == FIRST_STAGE) {
+					        s.setStateDistribution(2);
                             td = new TileDistribution();
                             CURR_STAGE = SECOND_STAGE;
-                        } else if (s.getTurnNumber() > FIRST_STAGE && CURR_STAGE == ZEROTH_STAGE) {
-                            s.setStateDistribution(1);
+                        } else if (s.getTurnNumber() >= FIRST_STAGE && CURR_STAGE == ZEROTH_STAGE) {
+					        s.setStateDistribution(1);
                             td = new TileDistribution();
                             CURR_STAGE = FIRST_STAGE;
                         }
