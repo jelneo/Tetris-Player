@@ -111,7 +111,7 @@ public class PlayerSkeleton {
 
         }
 
-        return finalScore * outerMoveScore; // why multiply? idk 
+        return finalScore * outerMoveScore; // why multiply? idk
     }
 
     public double simulateInnerMove(State s, int[] move) {
@@ -160,7 +160,6 @@ public class PlayerSkeleton {
                     td.increment(s.getNextPiece());
 					s.makeMove(p.pickMove(s, s.legalMoves()));
 					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-//					    System.out.println("TURN NUMBER: " + s.getTurnNumber() + " CURR_STAGE: " + CURR_STAGE);
 					    if (s.getTurnNumber() > FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
 					        s.setStateDistribution(4);
 					        td = new TileDistribution();
@@ -178,6 +177,7 @@ public class PlayerSkeleton {
                             td = new TileDistribution();
                             CURR_STAGE = FIRST_STAGE;
                         }
+                        System.out.println("Current rows cleared: " + s.getRowsCleared());
 						score += getScore(s);
 					}
 				}
