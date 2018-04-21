@@ -325,7 +325,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "start.txt";
+	private static final String PARAM_FILE_NAME = "test.txt";
 
 	/**
          * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
