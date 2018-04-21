@@ -98,15 +98,6 @@ public class PlayerSkeleton {
                 s.drawNext(0, 0);
             }
 
-            // This creates a delay, making it harder to test multiple tests
-			/*
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			*/
-
         }
         window.dispose();
     }
