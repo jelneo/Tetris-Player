@@ -80,7 +80,6 @@ public class PlayerSkeleton {
 		int var = 0;
 		int counter = DATA_SIZE; // set to 30 for more accurate sample size
 		while(counter-- > 0) {
-
             score = 0;
             State s = new State();
             if (visualMode) {
