@@ -5,6 +5,9 @@ import java.io.FileWriter;
 import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static java.lang.Integer.parseInt;
 
@@ -31,10 +34,10 @@ public class PlayerSkeleton {
     private static final int NUMBER_OF_SELECTED_EXTENSIONS = 3;
 
     private static final int ZEROTH_STAGE = 0;
-    private static final int FIRST_STAGE = 200;
-    private static final int SECOND_STAGE = 400;
-    private static final int THIRD_STAGE = 600;
-    private static final int FOURTH_STAGE = 800;
+    private static final int FIRST_STAGE = 2000;
+    private static final int SECOND_STAGE = 4000;
+    private static final int THIRD_STAGE = 6000;
+    private static final int FOURTH_STAGE = 10000;
     private static int CURR_STAGE = 0;
 
 	// Heavily prioritise objective of row clearing. Other Multipliers used for tiebreakers.
@@ -54,10 +57,12 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 1000;
-	private static final int TURNS_LIMIT = 5000;//Integer.MAX_VALUE;
+	private static final int DATA_SIZE = 20;
+	private static final int TURNS_LIMIT = Integer.MAX_VALUE;
 	private static final int SAMPLING_INTERVAL = 20;
+    private static final int REPETITIONS = 4;
 	private static GeneticAlgorithm geneticAlgorithm;
+	private static int score = 0;
 
 	//implement this function to have a working system
 	/**
@@ -69,61 +74,24 @@ public class PlayerSkeleton {
 	 * {@link PlayerSkeleton#simulateMove(State, int[]) simulateMove} method
 	 */
 	public int pickMove(State s, int[][] legalMoves) {
-
-		int maxIdx = 0;
-		double max = Double.NEGATIVE_INFINITY;
-		List<StateScorePair> scores = new ArrayList<>();
-		for (int i = 0; i < legalMoves.length; i++) {
-		    StateScorePair ssp = simulateMove(s, legalMoves[i], i);
-		    scores.add(ssp);
-		}
-
-        Collections.sort(scores);
-
-		// Select best three moves to make
-		for (int i = 0; i < NUMBER_OF_SELECTED_EXTENSIONS; i++) {
-            StateScorePair ssp = scores.get(scores.size() - i - 1);
-            Double score = simulateInnerMove(ssp.getScore(), ssp.getState(), ssp.getIndex());
+        int maxIdx = 0;
+        double max = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < legalMoves.length; i++) {
+            double score = simulateMove(s, legalMoves[i]);
             if (score > max) {
-                maxIdx = ssp.getIndex();
+                maxIdx = i;
                 max = score;
             }
         }
 
-		return maxIdx;
+        return maxIdx;
 	}
 
     // Simulates a move and returns a double that allows for evaluation. The higher the better.
-    public double simulateInnerMove(double outerMoveScore, SimulatedState ss, int index) {
-        // for every legal move, first simulate it
-        //  then for each of the 7 tiles,
-        //      multiply the (max of scores from each possible move (4 rotations - symmetries)) with (freq of tiles)
-        //  and sum all these values return to give a sense of how good the state will be if that legal move is made
-        // pick the best move like normal
-
-        double finalScore = 0;
-        for (int j = 0; j < State.N_PIECES; j++) {
-            ss.setNextPiece(j);
-            double maxTileScore = Double.NEGATIVE_INFINITY;
-            for (int k = 0; k < State.legalMoves[j].length; k++) {
-                double moveScore = Math.abs(simulateMove(ss, State.legalMoves[j][k], index).getScore());
-                if (moveScore > maxTileScore) {
-                    maxTileScore = moveScore;
-                }
-            }
-
-            finalScore += maxTileScore * td.getFreq(j);
-
-        }
-
-        return finalScore * outerMoveScore; // why multiply? idk
-    }
-
-    public StateScorePair simulateMove(State s, int[] move, int index) {
+    public double simulateMove(State s, int[] move) {
         SimulatedState ss = new SimulatedState(s);
-        return new StateScorePair(ss, ss.getMoveValue(move), index);
+        return ss.getMoveValue(move);
     }
-
 	public static void main(String[] args) {
 		setVisualMode();
 		setParameters();
@@ -151,48 +119,82 @@ public class PlayerSkeleton {
 		geneticAlgorithm = new GeneticAlgorithm(populationMultipliers);
 		multiplierWeights = populationMultipliers.get(0);
 		while(counter-- > 0) {
-			State s = new State();
-			td = new TileDistribution();
-			int score = 0;
 
-			if (visualMode) {
-				visualize(s);
-			} else {
-				PlayerSkeleton p = new PlayerSkeleton();
-				s.setStateDistribution(0);
-				CURR_STAGE = ZEROTH_STAGE;
-				while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
-                    td.increment(s.getNextPiece());
-					s.makeMove(p.pickMove(s, s.legalMoves()));
-					if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-					    if (s.getTurnNumber() >= FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
-					        s.setStateDistribution(4);
-					        td = new TileDistribution();
-					        CURR_STAGE = FOURTH_STAGE;
-                        } else if (s.getTurnNumber() >= THIRD_STAGE && CURR_STAGE == SECOND_STAGE) {
-                            s.setStateDistribution(3);
-                            td = new TileDistribution();
-                            CURR_STAGE = THIRD_STAGE;
-                        } else if (s.getTurnNumber() >= SECOND_STAGE && CURR_STAGE == FIRST_STAGE) {
-					        s.setStateDistribution(2);
-                            td = new TileDistribution();
-                            CURR_STAGE = SECOND_STAGE;
-                        } else if (s.getTurnNumber() >= FIRST_STAGE && CURR_STAGE == ZEROTH_STAGE) {
-					        s.setStateDistribution(1);
-                            td = new TileDistribution();
-                            CURR_STAGE = FIRST_STAGE;
+            score = 0;
+
+            ExecutorService executor = Executors.newWorkStealingPool();
+            Callable task = () -> {
+                State s = new State();
+                Integer scoreSum = 0;
+                if (visualMode) {
+                    visualize(s);
+                } else {
+                    PlayerSkeleton p = new PlayerSkeleton();
+                    s.setStateDistribution(0);
+                    CURR_STAGE = ZEROTH_STAGE;
+                    while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
+                        s.makeMove(p.pickMove(s, s.legalMoves()));
+                        if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
+                            System.out.println("Current rows cleared: " + s.getRowsCleared());
+                            if (s.getTurnNumber() % 1000 == 0) {
+                                if (s.getTurnNumber() >= FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
+                                    s.setStateDistribution(4);
+                                    CURR_STAGE = FOURTH_STAGE;
+                                    System.out.println("Entering Fourth Stage");
+                                } else if (s.getTurnNumber() >= THIRD_STAGE && CURR_STAGE == SECOND_STAGE) {
+                                    s.setStateDistribution(3);
+                                    CURR_STAGE = THIRD_STAGE;
+                                    System.out.println("Entering Third Stage");
+                                } else if (s.getTurnNumber() >= SECOND_STAGE && CURR_STAGE == FIRST_STAGE) {
+                                    s.setStateDistribution(2);
+                                    CURR_STAGE = SECOND_STAGE;
+                                    System.out.println("Entering Second Stage");
+                                } else if (s.getTurnNumber() >= FIRST_STAGE && CURR_STAGE == ZEROTH_STAGE) {
+                                    s.setStateDistribution(1);
+                                    CURR_STAGE = FIRST_STAGE;
+                                    System.out.println("Entering First Stage");
+                                }
+                            }
+
+                            scoreSum += getScore(s);
                         }
-                        System.out.println("Current rows cleared: " + s.getRowsCleared());
-						score += getScore(s);
-					}
-				}
 
-                score += s.getRowsCleared(); // at least get SOME scores
 
-                td.printFrequencies();
-			}
+                    }
 
-            System.out.println("Row Cleared: " + s.getRowsCleared());
+                    scoreSum += s.getRowsCleared(); // at least get SOME scores
+
+                }
+
+                System.out.println("Row Cleared: " + s.getRowsCleared());
+
+                return "" + scoreSum;
+            };
+
+            List<Callable<String>> callables = new ArrayList<>();
+
+            for (int i = 0; i < REPETITIONS; i++) {
+                callables.add(task);
+            }
+
+            try {
+                executor.invokeAll(callables)
+                        .stream()
+                        .map(future -> {
+                            try {
+                                return future.get();
+                            } catch (Exception e) {
+                                throw new IllegalStateException(e);
+                            }
+                        }).forEach((result) -> {
+                    score += parseInt(result);
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            score /= REPETITIONS;
+
             geneticAlgorithm.sendScore(multiplierWeights, Math.max(score, 1)); // positive scores only
             maxScore = Math.max(maxScore, score);
             minScore = Math.min(minScore, score);
@@ -220,7 +222,6 @@ public class PlayerSkeleton {
         PlayerSkeleton p = new PlayerSkeleton();
 
         while (!s.hasLost()) {
-            td.increment(s.getNextPiece());
             s.makeMove(p.pickMove(s, s.legalMoves()));
 
             if (visualMode) {
