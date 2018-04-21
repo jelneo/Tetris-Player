@@ -57,10 +57,10 @@ public class PlayerSkeleton {
 	/********************************* End of multipliers *********************************/
 
 	private static boolean visualMode = false;
-	private static final int DATA_SIZE = 20;
+	private static final int DATA_SIZE = 1000;
 	private static final int TURNS_LIMIT = Integer.MAX_VALUE;
 	private static final int SAMPLING_INTERVAL = 20;
-    private static final int REPETITIONS = 4;
+    private static final int REPETITIONS = 3;
 	private static GeneticAlgorithm geneticAlgorithm;
 	private static int score = 0;
 
@@ -135,8 +135,8 @@ public class PlayerSkeleton {
                     while (!s.hasLost() && (s.getTurnNumber() < TURNS_LIMIT)) {
                         s.makeMove(p.pickMove(s, s.legalMoves()));
                         if (s.getTurnNumber() % SAMPLING_INTERVAL == 0) {
-                            System.out.println("Current rows cleared: " + s.getRowsCleared());
                             if (s.getTurnNumber() % 1000 == 0) {
+                                System.out.println("Current rows cleared: " + s.getRowsCleared());
                                 if (s.getTurnNumber() >= FOURTH_STAGE && CURR_STAGE == THIRD_STAGE) {
                                     s.setStateDistribution(4);
                                     CURR_STAGE = FOURTH_STAGE;
@@ -325,7 +325,7 @@ public class PlayerSkeleton {
 
 
 	/********************************* Parameter weight optimization *********************************/
-	private static final String PARAM_FILE_NAME = "test.txt";
+	private static final String PARAM_FILE_NAME = "start.txt";
 
 	/**
          * Sets parameter multiplierWeights for the current iteration. Parameters stored in parameters.txt in same directory as
