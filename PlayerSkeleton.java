@@ -24,9 +24,7 @@ public class PlayerSkeleton {
     /********************************* End of multipliers *********************************/
 
     private static boolean visualMode = false;
-    private static final int DATA_SIZE = 1;
 
-    //implement this function to have a working system
     /**
      * Picks the move with the highest value.
      *
@@ -61,26 +59,24 @@ public class PlayerSkeleton {
     }
 
     /**
-     * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
+     * Executes a single game with the current parameter weight values.
      */
     private static void executeDataSet() {
-        int counter = DATA_SIZE; // set to 30 for more accurate sample size
-        while(counter-- > 0) {
-            State s = new State();
-            if (visualMode) {
-                visualize(s);
-            } else {
-                PlayerSkeleton p = new PlayerSkeleton();
-                while (!s.hasLost()) {
-                    s.makeMove(p.pickMove(s, s.legalMoves()));
-                    if (s.getTurnNumber() % 10000 == 0) {
-                        System.out.println("Row Cleared: " + s.getRowsCleared());
-                    }
-                }
+        State s = new State();
+        if (visualMode) {
+            visualize(s);
+        } else {
+            PlayerSkeleton p = new PlayerSkeleton();
+            while (!s.hasLost()) {
+                s.makeMove(p.pickMove(s, s.legalMoves()));
+                // uncomment the 3 lines below to see the number of rows cleared so far after every 10000 turns
+//                if (s.getTurnNumber() % 10000 == 0) {
+//                    System.out.println("Rows cleared so far: " + s.getRowsCleared());
+//                }
             }
-
-            System.out.println("You have completed " + s.getRowsCleared() + " rows.");
         }
+
+        System.out.println("You have completed " + s.getRowsCleared() + " rows.");
     }
 
     private static void setVisualMode() {
@@ -165,7 +161,6 @@ public class PlayerSkeleton {
             }
 
             /********************************* Perform simulation of adding piece *********************************/
-            /********************************* Please ignore this chunk (unless necessary) *********************************/
             //for each column in the piece - fill in the appropriate blocks
             for(int i = 0; i < pWidth[nextPiece][orient]; i++) {
                 //from bottom to top of brick
