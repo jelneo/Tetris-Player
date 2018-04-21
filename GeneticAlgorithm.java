@@ -126,41 +126,7 @@ public class GeneticAlgorithm {
         }
     }
 
-    /**
-     * Allow the PlayerSkeleton class to send scores for a set of multiplier weights
-     * @param score from using a set of multiplier weights
-     */
-    public void sendScore(double[] weights, double score) {
-        String s = arrayToString(chromosomes.get(currentCandidate));
-        String string = "Generation " + generation + "; Candidate " + (currentCandidate + 1) + ": " + s + " Score = " + score;
-        System.out.println(string);
-        scores.add(currentCandidate, new Candidate(weights, score));
-        currentCandidate++;
-        if (scores.size() == population) {
-            findFittestCandidate();
-            createNewGeneration();
-            PlayerSkeleton.setMultiplierWeights(chromosomes.get(0));
-            PlayerSkeleton.triggerSaveParameters();
-        } else {
-//            System.out.println("Current chromosome: " + Arrays.toString(chromosomes.get(currentCandidate)));
-            PlayerSkeleton.setMultiplierWeights(chromosomes.get(currentCandidate));
-        }
-    }
 
-    /**
-     * Returns the best set of multiplier weights
-     */
-    public double[] getFittestCandidate() {
-        System.out.println("fittest score: " + fittestScore + " from generation " + fittestGeneration + " candid. " + (fittestIndex+1)+" : " + arrayToString(fittestCandidate));
-        return fittestCandidate;
-    }
-
-    /**
-     * Returns the latest population
-     */
-    public List<double[]> getLatestPopulation() {
-        return chromosomes;
-    }
 
     /**
      * Converts double array to string
