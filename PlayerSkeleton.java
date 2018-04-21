@@ -4,7 +4,6 @@ public class PlayerSkeleton {
 
 
     /********************************* Multipliers to determine value of simulated move *********************************/
-    private static final int NUM_PARAMETERS = 14;
     private static final int ROWS_CLEARED_MULT_INDEX = 0;
     private static final int GLITCH_COUNT_MULT_INDEX = 1;
     private static final int BUMPINESS_MULT_INDEX = 2;
@@ -22,19 +21,10 @@ public class PlayerSkeleton {
 
     private static double[] multiplierWeights = {-0.033553527686142, -0.415751453578916, -0.036913107020928, -0.445754216613400, -0.222986515998048, -0.206907678827833, -0.250620568721037, -0.026227733935922, 0.412927523405899, 0.001942795106365, -0.187479727764187, -0.512544396246538, 0.032056119255016, -0.016464573599168};
 
-    private static String[] multiplierNames = {
-            "ROWS_CLEARED_MULT", "GLITCH_COUNT_MUL", "BUMPINESS_MUL", "TOTAL_HEIGHT_MUL", "MAX_HEIGHT_MUL", "VERTICAL_HOLES_MUL",
-            "SUM_OF_WELLS_MUL", "MAX_WELL_DEPTH_MUL", "BLOCKS_MUL", "WEIGHTED_BLOCKS_MUL", "ROW_TRANSITIONS_MUL",
-            "COL_TRANSITIONS_MUL", "BALANCE_MUL", "IDEAL_MUL"
-    };
-
     /********************************* End of multipliers *********************************/
 
     private static boolean visualMode = false;
     private static final int DATA_SIZE = 1;
-    private static final int TURNS_LIMIT = Integer.MAX_VALUE;
-    private static final int REPETITIONS = 3;
-    private static int score = 0;
 
     //implement this function to have a working system
     /**
@@ -74,13 +64,8 @@ public class PlayerSkeleton {
      * Executes {@link #DATA_SIZE} number of iterations with the current parameter weight values to retrieve.
      */
     private static void executeDataSet() {
-        int maxScore = Integer.MIN_VALUE;
-        int minScore = Integer.MAX_VALUE;
-        int sum = 0;
-        int var = 0;
         int counter = DATA_SIZE; // set to 30 for more accurate sample size
         while(counter-- > 0) {
-            score = 0;
             State s = new State();
             if (visualMode) {
                 visualize(s);
@@ -94,21 +79,8 @@ public class PlayerSkeleton {
                 }
             }
 
-//            System.out.println("Final Row Cleared: " + s.getRowsCleared());
-
-            score /= REPETITIONS;
-            maxScore = Math.max(maxScore, score);
-            minScore = Math.min(minScore, score);
-            sum += score;
-//            var += score * score;
-
             System.out.println("You have completed " + s.getRowsCleared() + " rows.");
         }
-
-//        var -= ((double) sum) * ((double) sum) / DATA_SIZE;
-//        var /= DATA_SIZE - 1;
-
-        System.out.println(" Ave: " + (sum / DATA_SIZE) + " Min: " + minScore + " Max: " + maxScore + " Var: " + var);
     }
 
     private static void setVisualMode() {
@@ -142,46 +114,6 @@ public class PlayerSkeleton {
         }
         window.dispose();
     }
-
-    /**
-     * Returns the maximum element in an integer array
-     */
-    private static int getMax(int[] arr) {
-        int max = 0;
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i] > max) {
-                max = arr[i];
-            }
-        }
-        return max;
-    }
-
-    /**
-     * Returns the number of holes/glitches in the state
-     */
-    private static int getHoles(State s) {
-        int count = 0;
-        int[][] field = s.getField();
-        int[] top = s.getTop();
-
-        int cols = field[0].length;
-
-        for(int c = 0; c < cols; c++) {
-            for(int r = top[c]; r >= 0; r--) {
-                if (isEmpty(field[r][c])) {
-                    count++;
-                }
-            }
-
-        }
-
-        return count;
-    }
-
-    private static boolean isEmpty(int grid) {
-        return grid == 0;
-    }
-
 
     /********************************* Nested class for state simulation *********************************/
 
